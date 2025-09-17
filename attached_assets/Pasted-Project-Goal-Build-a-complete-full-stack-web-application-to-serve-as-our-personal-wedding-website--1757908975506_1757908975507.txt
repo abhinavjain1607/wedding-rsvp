@@ -70,7 +70,7 @@ Header: Display our names/logo and a navigation link to the "RSVP" page.
 
 Wedding Details Section: Display key information in a clean layout:
 
-Event Dates (e.g., "October 24-26, 2025")
+Event Dates (e.g., "December 10 -11, 2025")
 
 Venue Name and Address (with a link to Google Maps).
 

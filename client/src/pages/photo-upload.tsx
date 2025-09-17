@@ -25,12 +25,12 @@ export default function PhotoUpload() {
   const uploadMutation = useMutation({
     mutationFn: async (data: PhotoUploadData & { photos: FileList }) => {
       const formData = new FormData();
-      Array.from(data.photos).forEach(file => {
+      Array.from(data.photos).forEach((file) => {
         formData.append("photos", file);
       });
       if (data.caption) formData.append("caption", data.caption);
       if (data.uploadedBy) formData.append("uploadedBy", data.uploadedBy);
-      
+
       return apiRequest("POST", "/api/gallery/upload", formData);
     },
     onSuccess: () => {
@@ -54,8 +54,10 @@ export default function PhotoUpload() {
     if (files) {
       // Validate file sizes
       const maxSize = 5 * 1024 * 1024; // 5MB
-      const invalidFiles = Array.from(files).filter(file => file.size > maxSize);
-      
+      const invalidFiles = Array.from(files).filter(
+        (file) => file.size > maxSize
+      );
+
       if (invalidFiles.length > 0) {
         toast({
           title: "Files too large",
@@ -95,9 +97,13 @@ export default function PhotoUpload() {
               Thank You!
             </h1>
             <p className="text-muted-foreground mb-6">
-              Your photos have been uploaded successfully. Sarah & Michael will treasure these memories!
+              Your photos have been uploaded successfully. Sneha & Abhinav will
+              treasure these memories!
             </p>
-            <Button onClick={() => window.location.href = "/"} data-testid="button-home">
+            <Button
+              onClick={() => (window.location.href = "/")}
+              data-testid="button-home"
+            >
               Back to Wedding Site
             </Button>
           </CardContent>
@@ -111,11 +117,15 @@ export default function PhotoUpload() {
       <div className="max-w-2xl mx-auto py-12">
         <div className="text-center mb-8">
           <Camera className="w-16 h-16 text-primary mx-auto mb-4" />
-          <h1 className="font-serif text-3xl font-bold text-foreground mb-4" data-testid="upload-title">
+          <h1
+            className="font-serif text-3xl font-bold text-foreground mb-4"
+            data-testid="upload-title"
+          >
             Share Your Wedding Photos
           </h1>
           <p className="text-muted-foreground">
-            Help Sarah & Michael capture every moment by uploading your photos from the celebration!
+            Help Sneha & Abhinav capture every moment by uploading your photos
+            from the celebration!
           </p>
         </div>
 
@@ -126,7 +136,10 @@ export default function PhotoUpload() {
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div>
-                <Label htmlFor="photos" className="block text-sm font-medium mb-2">
+                <Label
+                  htmlFor="photos"
+                  className="block text-sm font-medium mb-2"
+                >
                   Select Photos
                 </Label>
                 <div className="border-2 border-dashed border-input rounded-lg p-8 text-center hover:border-primary transition-colors">
@@ -153,7 +166,9 @@ export default function PhotoUpload() {
                 </div>
                 {selectedFiles && selectedFiles.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-sm text-muted-foreground mb-2">Selected files:</p>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Selected files:
+                    </p>
                     <ul className="text-sm space-y-1">
                       {Array.from(selectedFiles).map((file, index) => (
                         <li key={index} className="flex justify-between">
@@ -192,7 +207,11 @@ export default function PhotoUpload() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={uploadMutation.isPending || !selectedFiles || selectedFiles.length === 0}
+                disabled={
+                  uploadMutation.isPending ||
+                  !selectedFiles ||
+                  selectedFiles.length === 0
+                }
                 data-testid="button-upload"
               >
                 {uploadMutation.isPending ? "Uploading..." : "Upload Photos"}
@@ -203,7 +222,8 @@ export default function PhotoUpload() {
 
         <div className="text-center mt-8">
           <p className="text-sm text-muted-foreground">
-            By uploading photos, you grant Sarah & Michael permission to use them for their wedding memories.
+            By uploading photos, you grant Sneha & Abhinav permission to use
+            them for their wedding memories.
           </p>
         </div>
       </div>

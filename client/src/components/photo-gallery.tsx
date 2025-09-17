@@ -15,23 +15,26 @@ export default function PhotoGallery() {
     queryKey: ["/api/gallery"],
   });
 
-  // Default images if no custom images are uploaded
+  // Default images if no custom images are uploaded - using local placeholders
   const defaultImages = [
-    "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600",
-    "https://images.unsplash.com/photo-1529636798458-92182e662485?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600",
-    "https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600",
-    "https://images.unsplash.com/photo-1516414447565-b14be0adf13e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600",
-    "https://images.unsplash.com/photo-1512389142860-9c449e58a543?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600",
-    "https://images.unsplash.com/photo-1519225421980-715cb0215aed?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600",
+    "/images/gallery/gallery-1.jpg",
+    "/images/gallery/gallery-2.jpg",
+    "/images/gallery/gallery-3.jpg",
+    "/images/gallery/gallery-4.jpg",
+    "/images/gallery/gallery-5.jpg",
+    "/images/gallery/gallery-6.jpg",
   ];
 
-  const displayImages = images.length > 0 ? images : defaultImages.map((url, index) => ({
-    id: `default-${index}`,
-    imageUrl: url,
-    caption: "",
-    uploadedBy: "",
-    createdAt: new Date().toISOString(),
-  }));
+  const displayImages =
+    images.length > 0
+      ? images
+      : defaultImages.map((url, index) => ({
+          id: `default-${index}`,
+          imageUrl: url,
+          caption: "",
+          uploadedBy: "",
+          createdAt: new Date().toISOString(),
+        }));
 
   if (isLoading) {
     return (
@@ -52,28 +55,43 @@ export default function PhotoGallery() {
   }
 
   return (
-    <section id="gallery" className="py-20 px-4 sm:px-6 lg:px-8" data-testid="photo-gallery">
+    <section
+      id="gallery"
+      className="py-20 px-4 sm:px-6 lg:px-8"
+      data-testid="photo-gallery"
+    >
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground mb-4" data-testid="gallery-title">
+          <h2
+            className="font-serif text-3xl sm:text-4xl font-bold text-foreground mb-4"
+            data-testid="gallery-title"
+          >
             Photo Gallery
           </h2>
           <div className="w-24 h-1 bg-primary mx-auto rounded-full"></div>
-          <p className="text-muted-foreground mt-4">A glimpse into our journey together</p>
+          <p className="text-muted-foreground mt-4">
+            A glimpse into our journey together
+          </p>
         </div>
 
         {displayImages.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <Camera className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">No Photos Yet</h3>
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                No Photos Yet
+              </h3>
               <p className="text-muted-foreground">
-                Photos will appear here as they are uploaded by guests and admins.
+                Photos will appear here as they are uploaded by guests and
+                admins.
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="gallery-grid">
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            data-testid="gallery-grid"
+          >
             {displayImages.map((image, index) => (
               <div
                 key={image.id}
@@ -86,17 +104,22 @@ export default function PhotoGallery() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600";
+                    target.src =
+                      "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600";
                   }}
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
-                
+
                 {/* Caption overlay */}
                 {image.caption && (
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                    <p className="text-white text-sm font-medium">{image.caption}</p>
+                    <p className="text-white text-sm font-medium">
+                      {image.caption}
+                    </p>
                     {image.uploadedBy && (
-                      <p className="text-white/80 text-xs">by {image.uploadedBy}</p>
+                      <p className="text-white/80 text-xs">
+                        by {image.uploadedBy}
+                      </p>
                     )}
                   </div>
                 )}

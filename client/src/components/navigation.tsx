@@ -20,7 +20,7 @@ export default function Navigation() {
       window.location.href = `/#${id}`;
       return;
     }
-    
+
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
@@ -29,17 +29,23 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="glass-effect border-b border-border sticky top-0 z-50" data-testid="navigation">
+    <nav
+      className="glass-effect border-b border-border sticky top-0 z-50"
+      data-testid="navigation"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
             <Link href="/">
-              <h1 className="text-xl font-serif font-semibold text-primary cursor-pointer" data-testid="nav-logo">
-                Sarah & Michael
+              <h1
+                className="text-xl font-serif font-semibold text-primary cursor-pointer"
+                data-testid="nav-logo"
+              >
+                Sneha & Abhinav
               </h1>
             </Link>
           </div>
-          
+
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map((item) => (
@@ -53,7 +59,7 @@ export default function Navigation() {
               </button>
             ))}
             <Link href="/rsvp">
-              <Button 
+              <Button
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
                 data-testid="nav-rsvp"
               >
@@ -66,7 +72,11 @@ export default function Navigation() {
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" data-testid="nav-mobile-toggle">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  data-testid="nav-mobile-toggle"
+                >
                   <Menu className="w-6 h-6" />
                 </Button>
               </SheetTrigger>
@@ -83,7 +93,7 @@ export default function Navigation() {
                     </button>
                   ))}
                   <Link href="/rsvp">
-                    <Button 
+                    <Button
                       className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                       onClick={() => setIsOpen(false)}
                       data-testid="nav-mobile-rsvp"

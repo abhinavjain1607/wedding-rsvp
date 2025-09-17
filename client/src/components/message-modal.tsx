@@ -56,7 +56,7 @@ const DEFAULT_TEMPLATES = {
   reminder: {
     name: "Gentle Reminder to RSVP",
     content:
-      "Hi {{firstName}}! We hope you're doing well. We're finalizing our wedding plans and would love to know if you'll be able to join us in Italy. Please RSVP when you have a moment. Thank you! ❤️ Sarah & Michael",
+      "Hi {{firstName}}! We hope you're doing well. We're finalizing our wedding plans and would love to know if you'll be able to join us in Udaipur. Please RSVP when you have a moment. Thank you! ❤️ Sneha & Abhinav",
   },
   personalizedReminder: {
     name: "Personalized RSVP Reminder",
