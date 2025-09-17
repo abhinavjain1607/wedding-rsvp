@@ -1,23 +1,10 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["dist/**"]
-      }
+  "installCommand": "npm install --registry=https://registry.npmjs.org/ --no-audit --no-fund",
+  "buildCommand": "npm run build",
+  "functions": {
+    "dist/index.js": {
+      "runtime": "nodejs18.x"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/dist/index.js"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "installCommand": "npm ci --only=production",
-  "buildCommand": "npm run build"
+  }
 }

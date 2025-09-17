@@ -3,13 +3,38 @@
 ## Vercel Deployment
 
 ### Quick Fix for npm E401 Error
-The npm authentication error you encountered is now fixed with:
+
+**If you're still getting npm E401 errors, try these additional steps:**
+
+1. **In Vercel Dashboard → Project Settings → Environment Variables:**
+
+   - Add `NPM_CONFIG_REGISTRY=https://registry.npmjs.org/`
+   - Add `NODE_AUTH_TOKEN=""` (empty string)
+
+2. **In Vercel Dashboard → Project Settings → Git:**
+
+   - Ensure "Include source files outside of the Root Directory" is **disabled**
+   - Set Root Directory to `./` (current directory)
+
+3. **Force redeploy:**
+
+   - Go to Vercel dashboard → Deployments
+   - Click the three dots on latest deployment → Redeploy
+
+4. **Alternative: Delete and re-import project**
+   - If error persists, delete project in Vercel
+   - Re-import from GitHub (forces fresh npm install)
+
+The npm authentication error should be fixed with:
+
 - ✅ `.npmrc` file added with public registry configuration
 - ✅ `vercel.json` configuration for proper build process
 - ✅ Updated package.json with Vercel-specific scripts
 
 ### Vercel Environment Variables
+
 Set these in your Vercel dashboard (already configured):
+
 - `DATABASE_URL`: Your Supabase connection string
 - `NODE_ENV`: production
 - `SESSION_SECRET`: Secure random string
