@@ -42,7 +42,7 @@ let initialized = false;
 
 async function initializeApp() {
   if (initialized) return app;
-  
+
   await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
