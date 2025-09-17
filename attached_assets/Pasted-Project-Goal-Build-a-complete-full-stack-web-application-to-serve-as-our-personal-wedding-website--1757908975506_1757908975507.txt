@@ -1,0 +1,190 @@
+Project Goal:
+Build a complete, full-stack web application to serve as our personal wedding website and guest management platform. The application should be user-friendly for our guests and provide a powerful, secure admin dashboard for us to manage the event.
+
+Technology Stack:
+
+Frontend: Next.js with React and Tailwind CSS for a modern, responsive design.
+
+Backend: Node.js with Express.js for the API.
+
+Database: Use Replit's built-in PostgreSQL database.   
+
+Authentication: Replit Auth for Google Sign-In, specifically for the admin panel.
+
+Deployment: Configure for Replit Autoscale Deployments.   
+
+Phase 1: Database Schema and Initial Setup
+First, set up the PostgreSQL database with the following schema. This will be the foundation for all features.
+
+Guests Table:
+
+id: Primary Key (UUID)
+
+first_name: Text, Not Null
+
+last_name: Text, Not Null
+
+phone_whatsapp: Text (for WhatsApp messages)
+
+phone_sms: Text (for SMS messages)
+
+guest_count: Integer, Not Null
+
+requires_accommodation: Boolean, Default: false
+
+transport_mode: Text (e.g., 'Flight', 'Train', 'Driving')
+
+id_upload_url: Text (URL to the stored ID file)
+
+rsvp_status: Text, Default: 'Pending' (values: 'Pending', 'Attending', 'Declined')
+
+created_at: Timestamp
+
+updated_at: Timestamp
+
+Admins Table:
+
+email: Text, Primary Key (this will be the whitelisted admin email)
+
+name: Text
+
+DashboardContent Table:
+
+id: Primary Key (Integer)
+
+section_name: Text, Unique (e.g., 'our_story', 'venue_details')
+
+title: Text
+
+content: Text
+
+image_url: Text
+
+Phase 2: Guest-Facing Features
+1. Main Dashboard Page (Homepage):
+This is the public-facing page for all guests.
+
+Header: Display our names/logo and a navigation link to the "RSVP" page.
+
+"Our Story" Section: A section with a title and a paragraph of text, editable by admins.
+
+Wedding Details Section: Display key information in a clean layout:
+
+Event Dates (e.g., "October 24-26, 2025")
+
+Venue Name and Address (with a link to Google Maps).
+
+Transportation Information (details on shuttles, parking, etc.).
+
+Photo Gallery: A visually appealing grid of photos. Admins should be able to upload and manage these images.
+
+Photo Upload QR Code:
+
+Generate and display a QR code.
+
+When scanned on the wedding day, this QR code should link to a simple page where guests can upload photos from their phones directly to a shared album (e.g., using Replit Object Storage or a third-party service like GuestCam).   
+
+2. RSVP & Guest Information Form:
+This page will handle guest check-in and data collection. It needs a two-stage logic: initial submission and subsequent updates.
+
+Initial Submission Flow:
+
+A form with the following fields, which will create a new entry in the Guests table:
+
+First Name
+
+Last Name
+
+WhatsApp Phone Number (with country code validation)
+
+SMS Phone Number (optional)
+
+Total Number of Guests in Party
+
+"Do you require accommodation?": (Yes/No toggle)
+
+Mode of Transport (Dropdown: 'Flight', 'Train', 'Driving', 'Other')
+
+A file upload component for "Personal ID for Hotel Check-in." This should securely upload the file and store the URL in the id_upload_url field.
+
+Upon submission, display a confirmation message.
+
+Update Flow:
+
+On the RSVP page, include a link like "Already RSVP'd? Click here to update your details."
+
+This link leads to a simple form asking for "First Name" and "Last Name."
+
+Upon submission, search the Guests table for a matching record.
+
+If a match is found, pre-populate the full RSVP form with their existing details.
+
+The guest can then edit any field and re-submit. This should update their existing record in the database, not create a new one.
+
+Phase 3: Admin-Facing Features
+1. Secure Admin Portal:
+
+Create an /admin route that is protected.
+
+Implement Google Account login using Replit Auth.
+
+Crucially, restrict access to a specific list of whitelisted email addresses stored in the Admins table. If a user logs in with a non-whitelisted Google account, deny access.
+
+2. Admin Dashboard:
+This is the main view for admins after logging in.
+
+At-a-glance Statistics: Display key numbers pulled from the Guests table:
+
+Total Guests Responded
+
+Number of Guests 'Attending'
+
+Number of Guests 'Declined'
+
+Total Guests Requiring Accommodation
+
+Guest List View: Display the Guests table in a clean, sortable format. Show all columns.
+
+3. Admin Actions & Communication:
+
+WhatsApp Integration: Integrate with the Twilio WhatsApp Business API. Store the API keys securely in Replit Secrets.   
+
+Trigger Messages: In the guest list view, add a "Send Message" button next to each guest.
+
+Clicking this button should open a modal where an admin can type a custom message and send it to the guest's phone_whatsapp number via the Twilio API.
+
+Bulk Messaging: Add a feature to filter the guest list (e.g., by "RSVP Status: Pending" or "Requires Accommodation: Yes") and send a bulk message to all selected guests. Provide templates for common messages like:
+
+"Gentle Reminder to RSVP"
+
+"Important Update: Hotel Check-in Times"
+
+"Wedding Itinerary is Now Live!"
+
+4. Content Management System (CMS):
+
+Create an "Edit Dashboard" page within the admin portal.
+
+This page should allow admins to:
+
+Update the text content for sections like "Our Story" and "Wedding Details."
+
+Upload, delete, and reorder photos in the homepage gallery.
+
+These actions should update the corresponding entries in the DashboardContent table.
+
+5. Two-Way WhatsApp Communication Hub:
+
+Create a dedicated "WhatsApp Chat" page in the admin portal.
+
+This page should provide an interface for admins to have two-way conversations with guests. This could be achieved by embedding a chat client or linking directly to the WhatsApp Business account interface. The goal is to manage all wedding-related communication in one place.
+
+Phase 4: Deployment
+Set up the project for deployment on Replit.
+
+Ensure environment variables (like database URLs and Twilio API keys) are correctly configured in Replit Secrets for both development and production environments.   
+
+Connect a custom domain to the deployed application.   
+
+
+Sources and related content
