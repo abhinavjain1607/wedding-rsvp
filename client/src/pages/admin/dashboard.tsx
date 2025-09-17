@@ -1,12 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import AdminNavigation from "@/components/admin-navigation";
 import GuestTable from "@/components/guest-table";
+import AddGuestModal from "@/components/add-guest-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, UserX, Building } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, UserCheck, UserX, Building, Plus } from "lucide-react";
 import type { Guest } from "@shared/schema";
 
 interface GuestStats {
@@ -19,6 +21,7 @@ interface GuestStats {
 export default function AdminDashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const [addGuestModalOpen, setAddGuestModalOpen] = useState(false);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -59,13 +62,18 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <AdminNavigation />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-serif font-bold text-foreground mb-2" data-testid="dashboard-title">
+          <h1
+            className="text-2xl font-serif font-bold text-foreground mb-2"
+            data-testid="dashboard-title"
+          >
             Wedding Dashboard
           </h1>
-          <p className="text-muted-foreground">Manage your wedding guests and RSVPs</p>
+          <p className="text-muted-foreground">
+            Manage your wedding guests and RSVPs
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -79,8 +87,13 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Total Responded</h3>
-                  <p className="text-2xl font-semibold text-foreground" data-testid="stat-total-value">
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    Total Responded
+                  </h3>
+                  <p
+                    className="text-2xl font-semibold text-foreground"
+                    data-testid="stat-total-value"
+                  >
                     {statsLoading ? "..." : stats?.totalResponded || 0}
                   </p>
                 </div>
@@ -97,8 +110,13 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Attending</h3>
-                  <p className="text-2xl font-semibold text-foreground" data-testid="stat-attending-value">
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    Attending
+                  </h3>
+                  <p
+                    className="text-2xl font-semibold text-foreground"
+                    data-testid="stat-attending-value"
+                  >
                     {statsLoading ? "..." : stats?.attending || 0}
                   </p>
                 </div>
@@ -115,8 +133,13 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Declined</h3>
-                  <p className="text-2xl font-semibold text-foreground" data-testid="stat-declined-value">
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    Declined
+                  </h3>
+                  <p
+                    className="text-2xl font-semibold text-foreground"
+                    data-testid="stat-declined-value"
+                  >
                     {statsLoading ? "..." : stats?.declined || 0}
                   </p>
                 </div>
@@ -133,8 +156,13 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Need Accommodation</h3>
-                  <p className="text-2xl font-semibold text-foreground" data-testid="stat-accommodation-value">
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    Need Accommodation
+                  </h3>
+                  <p
+                    className="text-2xl font-semibold text-foreground"
+                    data-testid="stat-accommodation-value"
+                  >
                     {statsLoading ? "..." : stats?.accommodationNeeded || 0}
                   </p>
                 </div>
@@ -146,7 +174,17 @@ export default function AdminDashboard() {
         {/* Guest List */}
         <Card data-testid="card-guest-list">
           <CardHeader>
-            <CardTitle>Guest List</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Guest List</CardTitle>
+              <Button
+                onClick={() => setAddGuestModalOpen(true)}
+                className="flex items-center gap-2"
+                data-testid="button-add-guest"
+              >
+                <Plus className="w-4 h-4" />
+                Add Guest
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {guestsLoading ? (
@@ -158,6 +196,13 @@ export default function AdminDashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Add Guest Modal */}
+        <AddGuestModal
+          open={addGuestModalOpen}
+          onClose={() => setAddGuestModalOpen(false)}
+          onSuccess={() => setAddGuestModalOpen(false)}
+        />
       </div>
     </div>
   );

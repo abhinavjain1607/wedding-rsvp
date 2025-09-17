@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import RSVP from "@/pages/rsvp";
 import Landing from "@/pages/landing";
+import Login from "@/pages/login";
 import PhotoUpload from "@/pages/photo-upload";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminContent from "@/pages/admin/content";
@@ -19,10 +20,14 @@ function Router() {
   return (
     <Switch>
       {/* Public routes */}
-      <Route path="/" component={isLoading || !isAuthenticated ? Landing : Home} />
+      <Route
+        path="/"
+        component={isLoading || !isAuthenticated ? Landing : Home}
+      />
+      <Route path="/login" component={Login} />
       <Route path="/rsvp" component={RSVP} />
       <Route path="/photo-upload" component={PhotoUpload} />
-      
+
       {/* Admin routes - only show if authenticated */}
       {isAuthenticated && (
         <>
@@ -31,7 +36,7 @@ function Router() {
           <Route path="/admin/messages" component={AdminMessages} />
         </>
       )}
-      
+
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

@@ -27,7 +27,7 @@ export const sessions = pgTable(
 
 // User storage table (required for Replit Auth)
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: varchar("id").primaryKey(),
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
@@ -40,12 +40,13 @@ export const users = pgTable("users", {
 export const admins = pgTable("admins", {
   email: varchar("email").primaryKey(),
   name: varchar("name"),
+  passwordHash: varchar("password_hash").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Guests table for RSVP management
 export const guests = pgTable("guests", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid("id").defaultRandom().primaryKey(),
   firstName: varchar("first_name").notNull(),
   lastName: varchar("last_name").notNull(),
   phoneWhatsapp: varchar("phone_whatsapp"),
@@ -72,7 +73,7 @@ export const dashboardContent = pgTable("dashboard_content", {
 
 // Gallery images table
 export const galleryImages = pgTable("gallery_images", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid("id").primaryKey(),
   imageUrl: text("image_url").notNull(),
   caption: text("caption"),
   uploadedBy: varchar("uploaded_by"),
@@ -82,7 +83,7 @@ export const galleryImages = pgTable("gallery_images", {
 
 // Message templates table
 export const messageTemplates = pgTable("message_templates", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid("id").defaultRandom().primaryKey(),
   name: varchar("name").notNull(),
   subject: varchar("subject"),
   content: text("content").notNull(),
@@ -91,7 +92,7 @@ export const messageTemplates = pgTable("message_templates", {
 
 // Message logs table
 export const messageLogs = pgTable("message_logs", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid("id").defaultRandom().primaryKey(),
   guestId: uuid("guest_id").references(() => guests.id),
   phoneNumber: varchar("phone_number").notNull(),
   message: text("message").notNull(),
@@ -122,7 +123,9 @@ export const insertAdminSchema = createInsertSchema(admins).omit({
   createdAt: true,
 });
 
-export const insertDashboardContentSchema = createInsertSchema(dashboardContent).omit({
+export const insertDashboardContentSchema = createInsertSchema(
+  dashboardContent
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -133,7 +136,9 @@ export const insertGalleryImageSchema = createInsertSchema(galleryImages).omit({
   createdAt: true,
 });
 
-export const insertMessageTemplateSchema = createInsertSchema(messageTemplates).omit({
+export const insertMessageTemplateSchema = createInsertSchema(
+  messageTemplates
+).omit({
   id: true,
   createdAt: true,
 });
@@ -151,7 +156,9 @@ export type InsertGuest = z.infer<typeof insertGuestSchema>;
 export type Admin = typeof admins.$inferSelect;
 export type InsertAdmin = z.infer<typeof insertAdminSchema>;
 export type DashboardContent = typeof dashboardContent.$inferSelect;
-export type InsertDashboardContent = z.infer<typeof insertDashboardContentSchema>;
+export type InsertDashboardContent = z.infer<
+  typeof insertDashboardContentSchema
+>;
 export type GalleryImage = typeof galleryImages.$inferSelect;
 export type InsertGalleryImage = z.infer<typeof insertGalleryImageSchema>;
 export type MessageTemplate = typeof messageTemplates.$inferSelect;

@@ -8,12 +8,20 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-if (!process.env.REPLIT_DOMAINS) {
+// Check if we're in local development mode
+const isLocalDev =
+  process.env.NODE_ENV === "development" && !process.env.REPL_ID;
+
+if (!process.env.REPLIT_DOMAINS && !isLocalDev) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
 
 const getOidcConfig = memoize(
   async () => {
+    if (isLocalDev) {
+      // Return a dummy config for local development
+      return null;
+    }
     return await client.discovery(
       new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
       process.env.REPL_ID!
@@ -38,7 +46,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: !isLocalDev, // Only secure in production
       maxAge: sessionTtl,
     },
   });
@@ -54,9 +62,7 @@ function updateUserSession(
   user.expires_at = user.claims?.exp;
 }
 
-async function upsertUser(
-  claims: any,
-) {
+async function upsertUser(claims: any) {
   await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"],
@@ -72,7 +78,66 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  if (isLocalDev) {
+    // Mock authentication for local development
+    console.log(
+      "🔧 Running in local development mode - using mock authentication"
+    );
+
+    // Mock passport strategies
+    passport.serializeUser((user: Express.User, cb) => cb(null, user));
+    passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+
+    // Mock login route
+    app.get("/api/login", (req, res) => {
+      console.log("Mock login route hit");
+
+      // Create a mock user session
+      const mockUser = {
+        claims: {
+          sub: "mock-user-id",
+          email: "admin@example.com",
+          first_name: "Admin",
+          last_name: "User",
+          profile_image_url: "",
+          exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+        },
+        access_token: "mock-access-token",
+        refresh_token: "mock-refresh-token",
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+      };
+
+      req.logIn(mockUser, (err) => {
+        if (err) {
+          console.error("Mock login error:", err);
+          return res.status(500).json({ message: "Login failed" });
+        }
+        console.log("Mock login successful, redirecting to /");
+        res.redirect("/");
+      });
+    });
+
+    // Mock callback route
+    app.get("/api/callback", (req, res) => {
+      res.redirect("/");
+    });
+
+    // Mock logout route
+    app.get("/api/logout", (req, res) => {
+      req.logout(() => {
+        res.redirect("/");
+      });
+    });
+
+    return;
+  }
+
+  // Original Replit Auth setup for production
   const config = await getOidcConfig();
+
+  if (!config) {
+    throw new Error("Failed to get OIDC configuration");
+  }
 
   const verify: VerifyFunction = async (
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
@@ -84,8 +149,7 @@ export async function setupAuth(app: Express) {
     verified(null, user);
   };
 
-  for (const domain of process.env
-    .REPLIT_DOMAINS!.split(",")) {
+  for (const domain of process.env.REPLIT_DOMAINS!.split(",")) {
     const strategy = new Strategy(
       {
         name: `replitauth:${domain}`,
@@ -93,7 +157,7 @@ export async function setupAuth(app: Express) {
         scope: "openid email profile offline_access",
         callbackURL: `https://${domain}/api/callback`,
       },
-      verify,
+      verify
     );
     passport.use(strategy);
   }
@@ -118,7 +182,7 @@ export async function setupAuth(app: Express) {
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
       res.redirect(
-        client.buildEndSessionUrl(config, {
+        client.buildEndSessionUrl(config!, {
           client_id: process.env.REPL_ID!,
           post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
         }).href
@@ -134,11 +198,23 @@ interface AuthenticatedUser {
   expires_at: number;
 }
 
-const adminEmails = [
-  "your@email.com", // Replace with actual admin email(s)
-];
-
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  if (isLocalDev) {
+    // In local development, check both req.user and session
+    console.log("isAuthenticated check - local dev mode");
+    console.log("req.user:", req.user);
+    console.log("req.session.user:", (req as any).session?.user);
+    console.log("req.isAuthenticated():", req.isAuthenticated?.());
+
+    const user = req.user || (req as any).session?.user;
+    if (user) {
+      console.log("User authenticated, proceeding");
+      return next();
+    }
+    console.log("No user found, returning unauthorized");
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
   const user = req.user as AuthenticatedUser;
 
   if (!req.isAuthenticated() || !user.expires_at) {
@@ -158,6 +234,10 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
   try {
     const config = await getOidcConfig();
+    if (!config) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
     const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
     updateUserSession(user, tokenResponse);
     return next();
@@ -168,11 +248,48 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 };
 
 export const isAdmin: RequestHandler = async (req, res, next) => {
-  const user = req.user as AuthenticatedUser;
-  
-  if (!user?.claims?.email || !adminEmails.includes(user.claims.email)) {
-    return res.status(403).json({ message: "Forbidden: Admin access required" });
+  try {
+    if (isLocalDev) {
+      // In local development, check both req.user and session
+      console.log("isAdmin check - local dev mode");
+      console.log("req.user:", req.user);
+      console.log("req.session.user:", (req as any).session?.user);
+
+      const user = req.user || (req as any).session?.user;
+      if (user && user.email) {
+        // Check against admins table
+        const admin = await storage.getAdmin(user.email);
+        if (admin) {
+          console.log("User found in admins table, granting access");
+          return next();
+        }
+      }
+
+      console.log("User not found in admins table, denying access");
+      return res
+        .status(403)
+        .json({ message: "Forbidden: Admin access required" });
+    }
+
+    const user = req.user as AuthenticatedUser;
+
+    if (!user?.claims?.email) {
+      return res
+        .status(403)
+        .json({ message: "Forbidden: Admin access required" });
+    }
+
+    // Check if user is in admins table
+    const admin = await storage.getAdmin(user.claims.email);
+    if (!admin) {
+      return res
+        .status(403)
+        .json({ message: "Forbidden: Admin access required" });
+    }
+
+    next();
+  } catch (error) {
+    console.error("Error checking admin status:", error);
+    return res.status(500).json({ message: "Error checking admin status" });
   }
-  
-  next();
 };

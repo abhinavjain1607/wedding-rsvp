@@ -23,6 +23,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, ilike, desc } from "drizzle-orm";
+import bcrypt from "bcrypt";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -32,11 +33,21 @@ export interface IStorage {
   // Admin operations
   getAdmin(email: string): Promise<Admin | undefined>;
   createAdmin(admin: InsertAdmin): Promise<Admin>;
+  createAdminWithPassword(
+    email: string,
+    name: string,
+    password: string
+  ): Promise<Admin>;
+  verifyAdminPassword(email: string, password: string): Promise<boolean>;
+  updateAdminPassword(email: string, newPassword: string): Promise<void>;
   getAllAdmins(): Promise<Admin[]>;
 
   // Guest operations
   getGuest(id: string): Promise<Guest | undefined>;
-  getGuestByName(firstName: string, lastName: string): Promise<Guest | undefined>;
+  getGuestByName(
+    firstName: string,
+    lastName: string
+  ): Promise<Guest | undefined>;
   createGuest(guest: InsertGuest): Promise<Guest>;
   updateGuest(id: string, guest: Partial<InsertGuest>): Promise<Guest>;
   getAllGuests(): Promise<Guest[]>;
@@ -48,8 +59,12 @@ export interface IStorage {
   }>;
 
   // Dashboard content operations
-  getDashboardContent(sectionName: string): Promise<DashboardContent | undefined>;
-  upsertDashboardContent(content: InsertDashboardContent): Promise<DashboardContent>;
+  getDashboardContent(
+    sectionName: string
+  ): Promise<DashboardContent | undefined>;
+  upsertDashboardContent(
+    content: InsertDashboardContent
+  ): Promise<DashboardContent>;
   getAllDashboardContent(): Promise<DashboardContent[]>;
 
   // Gallery operations
@@ -60,7 +75,9 @@ export interface IStorage {
 
   // Message operations
   getAllMessageTemplates(): Promise<MessageTemplate[]>;
-  createMessageTemplate(template: InsertMessageTemplate): Promise<MessageTemplate>;
+  createMessageTemplate(
+    template: InsertMessageTemplate
+  ): Promise<MessageTemplate>;
   logMessage(log: InsertMessageLog): Promise<MessageLog>;
   getMessageLogs(guestId?: string): Promise<MessageLog[]>;
 }
@@ -89,13 +106,54 @@ export class DatabaseStorage implements IStorage {
 
   // Admin operations
   async getAdmin(email: string): Promise<Admin | undefined> {
-    const [admin] = await db.select().from(admins).where(eq(admins.email, email));
+    const [admin] = await db
+      .select()
+      .from(admins)
+      .where(eq(admins.email, email));
     return admin;
   }
 
   async createAdmin(admin: InsertAdmin): Promise<Admin> {
     const [newAdmin] = await db.insert(admins).values(admin).returning();
     return newAdmin;
+  }
+
+  async createAdminWithPassword(
+    email: string,
+    name: string,
+    password: string
+  ): Promise<Admin> {
+    const saltRounds = 12;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    const [newAdmin] = await db
+      .insert(admins)
+      .values({
+        email,
+        name,
+        passwordHash,
+      })
+      .returning();
+    return newAdmin;
+  }
+
+  async verifyAdminPassword(email: string, password: string): Promise<boolean> {
+    const admin = await this.getAdmin(email);
+    if (!admin || !admin.passwordHash) {
+      return false;
+    }
+
+    return await bcrypt.compare(password, admin.passwordHash);
+  }
+
+  async updateAdminPassword(email: string, newPassword: string): Promise<void> {
+    const saltRounds = 12;
+    const passwordHash = await bcrypt.hash(newPassword, saltRounds);
+
+    await db
+      .update(admins)
+      .set({ passwordHash })
+      .where(eq(admins.email, email));
   }
 
   async getAllAdmins(): Promise<Admin[]> {
@@ -108,7 +166,10 @@ export class DatabaseStorage implements IStorage {
     return guest;
   }
 
-  async getGuestByName(firstName: string, lastName: string): Promise<Guest | undefined> {
+  async getGuestByName(
+    firstName: string,
+    lastName: string
+  ): Promise<Guest | undefined> {
     const [guest] = await db
       .select()
       .from(guests)
@@ -126,7 +187,10 @@ export class DatabaseStorage implements IStorage {
     return newGuest;
   }
 
-  async updateGuest(id: string, guestData: Partial<InsertGuest>): Promise<Guest> {
+  async updateGuest(
+    id: string,
+    guestData: Partial<InsertGuest>
+  ): Promise<Guest> {
     const [updatedGuest] = await db
       .update(guests)
       .set({ ...guestData, updatedAt: new Date() })
@@ -146,11 +210,19 @@ export class DatabaseStorage implements IStorage {
     accommodationNeeded: number;
   }> {
     const allGuests = await this.getAllGuests();
-    
-    const totalResponded = allGuests.filter(g => g.rsvpStatus !== 'pending').length;
-    const attending = allGuests.filter(g => g.rsvpStatus === 'attending').length;
-    const declined = allGuests.filter(g => g.rsvpStatus === 'declined').length;
-    const accommodationNeeded = allGuests.filter(g => g.requiresAccommodation).length;
+
+    const totalResponded = allGuests.filter(
+      (g) => g.rsvpStatus !== "pending"
+    ).length;
+    const attending = allGuests.filter(
+      (g) => g.rsvpStatus === "attending"
+    ).length;
+    const declined = allGuests.filter(
+      (g) => g.rsvpStatus === "declined"
+    ).length;
+    const accommodationNeeded = allGuests.filter(
+      (g) => g.requiresAccommodation
+    ).length;
 
     return {
       totalResponded,
@@ -161,7 +233,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Dashboard content operations
-  async getDashboardContent(sectionName: string): Promise<DashboardContent | undefined> {
+  async getDashboardContent(
+    sectionName: string
+  ): Promise<DashboardContent | undefined> {
     const [content] = await db
       .select()
       .from(dashboardContent)
@@ -169,7 +243,9 @@ export class DatabaseStorage implements IStorage {
     return content;
   }
 
-  async upsertDashboardContent(content: InsertDashboardContent): Promise<DashboardContent> {
+  async upsertDashboardContent(
+    content: InsertDashboardContent
+  ): Promise<DashboardContent> {
     const [upsertedContent] = await db
       .insert(dashboardContent)
       .values(content)
@@ -192,7 +268,10 @@ export class DatabaseStorage implements IStorage {
 
   // Gallery operations
   async getAllGalleryImages(): Promise<GalleryImage[]> {
-    return await db.select().from(galleryImages).orderBy(galleryImages.sortOrder);
+    return await db
+      .select()
+      .from(galleryImages)
+      .orderBy(galleryImages.sortOrder);
   }
 
   async createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage> {
@@ -216,8 +295,13 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(messageTemplates);
   }
 
-  async createMessageTemplate(template: InsertMessageTemplate): Promise<MessageTemplate> {
-    const [newTemplate] = await db.insert(messageTemplates).values(template).returning();
+  async createMessageTemplate(
+    template: InsertMessageTemplate
+  ): Promise<MessageTemplate> {
+    const [newTemplate] = await db
+      .insert(messageTemplates)
+      .values(template)
+      .returning();
     return newTemplate;
   }
 
@@ -234,7 +318,10 @@ export class DatabaseStorage implements IStorage {
         .where(eq(messageLogs.guestId, guestId))
         .orderBy(desc(messageLogs.sentAt));
     }
-    return await db.select().from(messageLogs).orderBy(desc(messageLogs.sentAt));
+    return await db
+      .select()
+      .from(messageLogs)
+      .orderBy(desc(messageLogs.sentAt));
   }
 }
 

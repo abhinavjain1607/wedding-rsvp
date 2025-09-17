@@ -2,24 +2,24 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import MessageModal from "@/components/message-modal";
 import { Search, MessageSquare, Users } from "lucide-react";
@@ -28,13 +28,13 @@ interface Guest {
   id: string;
   firstName: string;
   lastName: string;
-  phoneWhatsapp?: string;
-  phoneSms?: string;
+  phoneWhatsapp?: string | null;
+  phoneSms?: string | null;
   guestCount: number;
-  requiresAccommodation: boolean;
-  transportMode?: string;
-  rsvpStatus: string;
-  createdAt: string;
+  requiresAccommodation: boolean | null;
+  transportMode?: string | null;
+  rsvpStatus: string | null;
+  createdAt: string | Date | null;
 }
 
 interface GuestTableProps {
@@ -43,7 +43,7 @@ interface GuestTableProps {
 
 export default function GuestTable({ guests }: GuestTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
   const [messageModalOpen, setMessageModalOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
@@ -53,13 +53,14 @@ export default function GuestTable({ guests }: GuestTableProps) {
 
   // Filter guests based on search and status
   const filteredGuests = guests.filter((guest) => {
-    const matchesSearch = 
+    const matchesSearch =
       guest.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       guest.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       guest.phoneWhatsapp?.includes(searchTerm);
-    
-    const matchesStatus = !statusFilter || guest.rsvpStatus === statusFilter;
-    
+
+    const matchesStatus =
+      statusFilter === "all" || guest.rsvpStatus === statusFilter;
+
     return matchesSearch && matchesStatus;
   });
 
@@ -67,13 +68,13 @@ export default function GuestTable({ guests }: GuestTableProps) {
     if (checked) {
       setSelectedGuests([...selectedGuests, guestId]);
     } else {
-      setSelectedGuests(selectedGuests.filter(id => id !== guestId));
+      setSelectedGuests(selectedGuests.filter((id) => id !== guestId));
     }
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedGuests(filteredGuests.map(guest => guest.id));
+      setSelectedGuests(filteredGuests.map((guest) => guest.id));
     } else {
       setSelectedGuests([]);
     }
@@ -102,7 +103,9 @@ export default function GuestTable({ guests }: GuestTableProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "attending":
-        return <Badge className="bg-secondary/10 text-secondary">Attending</Badge>;
+        return (
+          <Badge className="bg-secondary/10 text-secondary">Attending</Badge>
+        );
       case "declined":
         return <Badge variant="destructive">Declined</Badge>;
       default:
@@ -133,20 +136,20 @@ export default function GuestTable({ guests }: GuestTableProps) {
               data-testid="search-guests"
             />
           </div>
-          
+
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48" data-testid="filter-status">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Statuses</SelectItem>
+              <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="attending">Attending</SelectItem>
               <SelectItem value="declined">Declined</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="flex gap-2">
           {selectedGuests.length > 0 && (
             <Button
@@ -168,7 +171,10 @@ export default function GuestTable({ guests }: GuestTableProps) {
             <TableRow>
               <TableHead className="w-12">
                 <Checkbox
-                  checked={selectedGuests.length === filteredGuests.length && filteredGuests.length > 0}
+                  checked={
+                    selectedGuests.length === filteredGuests.length &&
+                    filteredGuests.length > 0
+                  }
                   onCheckedChange={handleSelectAll}
                   data-testid="checkbox-select-all"
                 />
@@ -186,8 +192,13 @@ export default function GuestTable({ guests }: GuestTableProps) {
           <TableBody>
             {filteredGuests.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                  {guests.length === 0 ? "No guests have RSVP'd yet" : "No guests match your search criteria"}
+                <TableCell
+                  colSpan={9}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  {guests.length === 0
+                    ? "No guests have RSVP'd yet"
+                    : "No guests match your search criteria"}
                 </TableCell>
               </TableRow>
             ) : (
@@ -196,21 +207,28 @@ export default function GuestTable({ guests }: GuestTableProps) {
                   <TableCell>
                     <Checkbox
                       checked={selectedGuests.includes(guest.id)}
-                      onCheckedChange={(checked) => handleSelectGuest(guest.id, checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        handleSelectGuest(guest.id, checked as boolean)
+                      }
                       data-testid={`checkbox-guest-${guest.id}`}
                     />
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium">{guest.firstName} {guest.lastName}</div>
+                    <div className="font-medium">
+                      {guest.firstName} {guest.lastName}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       {guest.phoneWhatsapp && (
                         <div className="text-sm">{guest.phoneWhatsapp}</div>
                       )}
-                      {guest.phoneSms && guest.phoneSms !== guest.phoneWhatsapp && (
-                        <div className="text-sm text-muted-foreground">{guest.phoneSms}</div>
-                      )}
+                      {guest.phoneSms &&
+                        guest.phoneSms !== guest.phoneWhatsapp && (
+                          <div className="text-sm text-muted-foreground">
+                            {guest.phoneSms}
+                          </div>
+                        )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -220,10 +238,16 @@ export default function GuestTable({ guests }: GuestTableProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {getStatusBadge(guest.rsvpStatus)}
+                    {getStatusBadge(guest.rsvpStatus || "pending")}
                   </TableCell>
                   <TableCell>
-                    <span className={guest.requiresAccommodation ? "text-foreground" : "text-muted-foreground"}>
+                    <span
+                      className={
+                        guest.requiresAccommodation
+                          ? "text-foreground"
+                          : "text-muted-foreground"
+                      }
+                    >
                       {guest.requiresAccommodation ? "Yes" : "No"}
                     </span>
                   </TableCell>
@@ -234,7 +258,9 @@ export default function GuestTable({ guests }: GuestTableProps) {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-muted-foreground">
-                      {formatDate(guest.createdAt)}
+                      {guest.createdAt
+                        ? formatDate(guest.createdAt.toString())
+                        : "N/A"}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -264,7 +290,9 @@ export default function GuestTable({ guests }: GuestTableProps) {
         onSuccess={() => {
           setMessageModalOpen(false);
           setSelectedGuests([]);
-          queryClient.invalidateQueries({ queryKey: ["/api/admin/message-logs"] });
+          queryClient.invalidateQueries({
+            queryKey: ["/api/admin/message-logs"],
+          });
         }}
       />
     </div>

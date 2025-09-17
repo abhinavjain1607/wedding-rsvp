@@ -2,10 +2,16 @@ import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin } from "./replitAuth";
-import { insertGuestSchema, insertDashboardContentSchema, insertGalleryImageSchema } from "@shared/schema";
+import {
+  insertGuestSchema,
+  insertDashboardContentSchema,
+  insertGalleryImageSchema,
+} from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { randomUUID } from "crypto";
+import twilio from "twilio";
 
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -29,26 +35,134 @@ async function sendWhatsAppMessage(phoneNumber: string, message: string) {
     throw new Error("Twilio credentials not configured");
   }
 
-  // Note: In a real implementation, you would use Twilio SDK here
-  // For now, we'll simulate the API call
-  console.log(`Sending WhatsApp message to ${phoneNumber}: ${message}`);
-  
-  // Simulate API response
-  return {
-    sid: `SM${Date.now()}`,
-    status: "sent",
-    to: phoneNumber,
-    body: message,
-  };
+  try {
+    // Initialize Twilio client
+    const client = twilio(accountSid, authToken);
+
+    // Send WhatsApp message
+    const messageResponse = await client.messages.create({
+      body: message,
+      from: `whatsapp:${twilioPhoneNumber}`,
+      to: `whatsapp:${phoneNumber}`,
+    });
+
+    console.log(
+      `✅ WhatsApp message sent successfully: ${messageResponse.sid}`
+    );
+    return messageResponse;
+  } catch (error) {
+    console.error("❌ Error sending WhatsApp message:", error);
+    throw error;
+  }
+}
+
+function processMessageTemplate(template: string, guest: any): string {
+  let processedMessage = template;
+
+  // Replace guest information placeholders
+  processedMessage = processedMessage.replace(
+    /\{\{firstName\}\}/g,
+    guest.firstName || ""
+  );
+  processedMessage = processedMessage.replace(
+    /\{\{lastName\}\}/g,
+    guest.lastName || ""
+  );
+  processedMessage = processedMessage.replace(
+    /\{\{fullName\}\}/g,
+    `${guest.firstName || ""} ${guest.lastName || ""}`.trim()
+  );
+  processedMessage = processedMessage.replace(
+    /\{\{guestCount\}\}/g,
+    guest.guestCount?.toString() || "1"
+  );
+  processedMessage = processedMessage.replace(
+    /\{\{phoneWhatsapp\}\}/g,
+    guest.phoneWhatsapp || ""
+  );
+  processedMessage = processedMessage.replace(
+    /\{\{phoneSms\}\}/g,
+    guest.phoneSms || ""
+  );
+  processedMessage = processedMessage.replace(
+    /\{\{transportMode\}\}/g,
+    guest.transportMode || "not specified"
+  );
+  processedMessage = processedMessage.replace(
+    /\{\{rsvpStatus\}\}/g,
+    guest.rsvpStatus || "pending"
+  );
+
+  // Replace accommodation status
+  const accommodationText = guest.requiresAccommodation ? "Yes" : "No";
+  processedMessage = processedMessage.replace(
+    /\{\{requiresAccommodation\}\}/g,
+    accommodationText
+  );
+
+  // Replace conditional accommodation text
+  if (guest.requiresAccommodation) {
+    processedMessage = processedMessage.replace(
+      /\{\{ifAccommodation\}\}(.*?)\{\{\/ifAccommodation\}\}/g,
+      "$1"
+    );
+  } else {
+    processedMessage = processedMessage.replace(
+      /\{\{ifAccommodation\}\}(.*?)\{\{\/ifAccommodation\}\}/g,
+      ""
+    );
+  }
+
+  // Replace conditional attending text
+  if (guest.rsvpStatus === "attending") {
+    processedMessage = processedMessage.replace(
+      /\{\{ifAttending\}\}(.*?)\{\{\/ifAttending\}\}/g,
+      "$1"
+    );
+  } else {
+    processedMessage = processedMessage.replace(
+      /\{\{ifAttending\}\}(.*?)\{\{\/ifAttending\}\}/g,
+      ""
+    );
+  }
+
+  return processedMessage;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
+  // Debug endpoint for local development
+  app.get("/api/debug/user", (req: any, res) => {
+    console.log("Debug user endpoint hit");
+    console.log("req.user:", req.user);
+    console.log("req.isAuthenticated():", req.isAuthenticated?.());
+    res.json({
+      user: req.user,
+      isAuthenticated: req.isAuthenticated?.(),
+      session: req.session,
+    });
+  });
+
   // Auth routes
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
+      // Handle local development differently
+      if (process.env.NODE_ENV === "development" && !process.env.REPL_ID) {
+        console.log("Local dev - returning user from session");
+        const user = req.user || req.session?.user;
+        if (user) {
+          return res.json({
+            id: user.id || "local-user-id",
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            profileImageUrl: user.profileImageUrl || "",
+          });
+        }
+      }
+
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       res.json(user);
@@ -58,19 +172,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin check middleware
-  const isAdmin = async (req: any, res: any, next: any) => {
+  // Local login endpoint for development
+  app.post("/api/local-login", async (req: any, res) => {
     try {
-      const userEmail = req.user.claims.email;
-      const admin = await storage.getAdmin(userEmail);
-      if (!admin) {
-        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      console.log("Login request received:", req.body);
+      if (process.env.NODE_ENV === "development" && !process.env.REPL_ID) {
+        const { email, password } = req.body;
+
+        console.log(
+          "Extracted email:",
+          email,
+          "password:",
+          password ? "***" : "undefined"
+        );
+
+        if (!email || !password) {
+          console.log("Validation failed - missing email or password");
+          return res
+            .status(400)
+            .json({ message: "Email and password are required" });
+        }
+
+        // Verify admin credentials
+        const isValidAdmin = await storage.verifyAdminPassword(email, password);
+        if (!isValidAdmin) {
+          return res.status(403).json({ message: "Invalid email or password" });
+        }
+
+        // Get admin details
+        const admin = await storage.getAdmin(email);
+        if (!admin) {
+          return res.status(403).json({ message: "Admin not found" });
+        }
+
+        // Create user session
+        const userData = {
+          id: `local-${Date.now()}`,
+          email: admin.email,
+          firstName: admin.name?.split(" ")[0] || "Admin",
+          lastName: admin.name?.split(" ").slice(1).join(" ") || "",
+          profileImageUrl: "",
+        };
+
+        // Use passport login or session
+        req.logIn(userData, (err: any) => {
+          if (err) {
+            console.error("Local login error:", err);
+            return res.status(500).json({ message: "Login failed" });
+          }
+
+          // Also store in session as backup
+          req.session.user = userData;
+
+          console.log("Local login successful for:", email);
+          res.json({ message: "Login successful", user: userData });
+        });
+      } else {
+        res
+          .status(404)
+          .json({ message: "Endpoint not available in production" });
       }
-      next();
     } catch (error) {
-      res.status(500).json({ message: "Error checking admin status" });
+      console.error("Local login error:", error);
+      res.status(500).json({ message: "Login failed" });
     }
-  };
+  });
 
   // Public routes
   app.get("/api/dashboard-content", async (req, res) => {
@@ -108,7 +274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/guests", upload.single("idDocument"), async (req, res) => {
     try {
       const guestData = insertGuestSchema.parse(req.body);
-      
+
       // Handle file upload if present
       if (req.file) {
         const fileUrl = `/uploads/${req.file.filename}`;
@@ -141,7 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const guestData = insertGuestSchema.partial().parse(req.body);
-      
+
       // Handle file upload if present
       if (req.file) {
         const fileUrl = `/uploads/${req.file.filename}`;
@@ -157,39 +323,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Photo upload route
-  app.post("/api/gallery/upload", upload.array("photos", 10), async (req, res) => {
-    try {
-      if (!req.files || !Array.isArray(req.files)) {
-        return res.status(400).json({ message: "No files uploaded" });
-      }
+  app.post(
+    "/api/gallery/upload",
+    upload.array("photos", 10),
+    async (req, res) => {
+      try {
+        if (!req.files || !Array.isArray(req.files)) {
+          return res.status(400).json({ message: "No files uploaded" });
+        }
 
-      const uploadedImages = [];
-      for (const file of req.files) {
-        const imageUrl = `/uploads/${file.filename}`;
-        const image = await storage.createGalleryImage({
-          imageUrl,
-          caption: req.body.caption || "",
-          uploadedBy: req.body.uploadedBy || "guest",
-        });
-        uploadedImages.push(image);
-      }
+        const uploadedImages = [];
+        for (const file of req.files) {
+          const imageUrl = `/uploads/${file.filename}`;
+          const image = await storage.createGalleryImage({
+            imageUrl,
+            caption: req.body.caption || "",
+            uploadedBy: req.body.uploadedBy || "guest",
+          });
+          uploadedImages.push(image);
+        }
 
-      res.status(201).json(uploadedImages);
-    } catch (error) {
-      console.error("Error uploading photos:", error);
-      res.status(400).json({ message: "Failed to upload photos" });
+        res.status(201).json(uploadedImages);
+      } catch (error) {
+        console.error("Error uploading photos:", error);
+        res.status(400).json({ message: "Failed to upload photos" });
+      }
     }
-  });
+  );
 
   // Serve uploaded files
-  app.use("/uploads", (req, res, next) => {
-    // Basic security check
-    const filePath = path.join(uploadDir, req.path);
-    if (!filePath.startsWith(uploadDir)) {
-      return res.status(403).json({ message: "Access denied" });
-    }
-    next();
-  }, express.static(uploadDir));
+  app.use(
+    "/uploads",
+    (req, res, next) => {
+      // Basic security check
+      const filePath = path.join(uploadDir, req.path);
+      if (!filePath.startsWith(uploadDir)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      next();
+    },
+    express.static(uploadDir)
+  );
 
   // Admin routes
   app.get("/api/admin/guests", isAuthenticated, isAdmin, async (req, res) => {
@@ -199,6 +373,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching guests:", error);
       res.status(500).json({ message: "Failed to fetch guests" });
+    }
+  });
+
+  app.post("/api/admin/guests", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const guestData = insertGuestSchema.parse(req.body);
+      const guest = await storage.createGuest(guestData);
+      res.status(201).json(guest);
+    } catch (error) {
+      console.error("Error creating guest:", error);
+      res.status(400).json({ message: "Failed to create guest" });
     }
   });
 
@@ -212,148 +397,293 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/dashboard-content", isAuthenticated, isAdmin, async (req, res) => {
+  // Admin management routes
+  app.get("/api/admin/admins", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const contentData = insertDashboardContentSchema.parse(req.body);
-      const content = await storage.upsertDashboardContent(contentData);
-      res.json(content);
+      const adminList = await storage.getAllAdmins();
+      res.json(adminList);
     } catch (error) {
-      console.error("Error updating dashboard content:", error);
-      res.status(400).json({ message: "Failed to update dashboard content" });
+      console.error("Error fetching admins:", error);
+      res.status(500).json({ message: "Failed to fetch admins" });
     }
   });
 
-  app.post("/api/admin/gallery", isAuthenticated, isAdmin, upload.array("images", 10), async (req, res) => {
+  app.post("/api/admin/admins", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      if (!req.files || !Array.isArray(req.files)) {
-        return res.status(400).json({ message: "No files uploaded" });
+      const { email, name, password } = req.body;
+      if (!email || !password) {
+        return res
+          .status(400)
+          .json({ message: "Email and password are required" });
       }
 
-      const uploadedImages = [];
-      for (const file of req.files) {
-        const imageUrl = `/uploads/${file.filename}`;
-        const image = await storage.createGalleryImage({
-          imageUrl,
-          caption: req.body.caption || "",
-          uploadedBy: (req.user as any)?.claims?.email || "admin",
+      // Check if admin already exists
+      const existingAdmin = await storage.getAdmin(email);
+      if (existingAdmin) {
+        return res.status(400).json({ message: "Admin already exists" });
+      }
+
+      const admin = await storage.createAdminWithPassword(
+        email,
+        name || "Admin",
+        password
+      );
+      res.status(201).json(admin);
+    } catch (error) {
+      console.error("Error creating admin:", error);
+      res.status(400).json({ message: "Failed to create admin" });
+    }
+  });
+
+  // Special route for initial admin setup (only works if no admins exist)
+  app.post("/api/setup-admin", async (req, res) => {
+    try {
+      const allAdmins = await storage.getAllAdmins();
+      if (allAdmins.length > 0) {
+        return res.status(400).json({
+          message: "Admins already exist. Use the admin interface to add more.",
         });
-        uploadedImages.push(image);
       }
 
-      res.status(201).json(uploadedImages);
+      const { email, name, password } = req.body;
+      if (!email || !password) {
+        return res
+          .status(400)
+          .json({ message: "Email and password are required" });
+      }
+
+      const admin = await storage.createAdminWithPassword(
+        email,
+        name || "Admin",
+        password
+      );
+      res
+        .status(201)
+        .json({ message: "Initial admin created successfully", admin });
     } catch (error) {
-      console.error("Error uploading gallery images:", error);
-      res.status(400).json({ message: "Failed to upload gallery images" });
+      console.error("Error setting up initial admin:", error);
+      res.status(500).json({ message: "Failed to setup initial admin" });
     }
   });
 
-  app.delete("/api/admin/gallery/:id", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const { id } = req.params;
-      await storage.deleteGalleryImage(id);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting gallery image:", error);
-      res.status(400).json({ message: "Failed to delete gallery image" });
-    }
-  });
-
-  app.post("/api/admin/message/send", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const { guestId, phoneNumber, message } = req.body;
-
-      if (!phoneNumber || !message) {
-        return res.status(400).json({ message: "Phone number and message are required" });
+  app.put(
+    "/api/admin/dashboard-content",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const contentData = insertDashboardContentSchema.parse(req.body);
+        const content = await storage.upsertDashboardContent(contentData);
+        res.json(content);
+      } catch (error) {
+        console.error("Error updating dashboard content:", error);
+        res.status(400).json({ message: "Failed to update dashboard content" });
       }
-
-      // Send WhatsApp message
-      const result = await sendWhatsAppMessage(phoneNumber, message);
-
-      // Log the message
-      await storage.logMessage({
-        guestId: guestId || null,
-        phoneNumber,
-        message,
-        status: result.status,
-      });
-
-      res.json({ success: true, result });
-    } catch (error) {
-      console.error("Error sending message:", error);
-      res.status(500).json({ message: "Failed to send message" });
     }
-  });
+  );
 
-  app.post("/api/admin/message/bulk", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const { guestIds, message } = req.body;
+  app.post(
+    "/api/admin/gallery",
+    isAuthenticated,
+    isAdmin,
+    upload.array("images", 10),
+    async (req, res) => {
+      try {
+        if (!req.files || !Array.isArray(req.files)) {
+          return res.status(400).json({ message: "No files uploaded" });
+        }
 
-      if (!guestIds || !Array.isArray(guestIds) || !message) {
-        return res.status(400).json({ message: "Guest IDs and message are required" });
+        const uploadedImages = [];
+        for (const file of req.files) {
+          const imageUrl = `/uploads/${file.filename}`;
+          const image = await storage.createGalleryImage({
+            imageUrl,
+            caption: req.body.caption || "",
+            uploadedBy: (req.user as any)?.claims?.email || "admin",
+          });
+          uploadedImages.push(image);
+        }
+
+        res.status(201).json(uploadedImages);
+      } catch (error) {
+        console.error("Error uploading gallery images:", error);
+        res.status(400).json({ message: "Failed to upload gallery images" });
       }
+    }
+  );
 
-      const results = [];
-      for (const guestId of guestIds) {
-        const guest = await storage.getGuest(guestId);
-        if (guest && guest.phoneWhatsapp) {
-          try {
-            const result = await sendWhatsAppMessage(guest.phoneWhatsapp, message);
-            await storage.logMessage({
-              guestId,
-              phoneNumber: guest.phoneWhatsapp,
-              message,
-              status: result.status,
-            });
-            results.push({ guestId, success: true });
-          } catch (error) {
-            console.error(`Failed to send message to guest ${guestId}:`, error);
-            results.push({ guestId, success: false, error: error instanceof Error ? error.message : String(error) });
+  app.delete(
+    "/api/admin/gallery/:id",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const { id } = req.params;
+        await storage.deleteGalleryImage(id);
+        res.status(204).send();
+      } catch (error) {
+        console.error("Error deleting gallery image:", error);
+        res.status(400).json({ message: "Failed to delete gallery image" });
+      }
+    }
+  );
+
+  app.post(
+    "/api/admin/message/send",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        console.log("📱 Message send request:", req.body);
+        const { guestId, phoneNumber, message } = req.body;
+
+        if (!phoneNumber || !message) {
+          console.log("❌ Missing required fields");
+          return res
+            .status(400)
+            .json({ message: "Phone number and message are required" });
+        }
+
+        console.log("📞 Sending WhatsApp message...");
+
+        let processedMessage = message;
+        // If there's a guestId, get guest data and process template
+        if (guestId) {
+          const guest = await storage.getGuest(guestId);
+          if (guest) {
+            processedMessage = processMessageTemplate(message, guest);
           }
         }
+
+        // Send WhatsApp message
+        const result = await sendWhatsAppMessage(phoneNumber, processedMessage);
+        console.log("✅ WhatsApp message sent:", result);
+
+        console.log("💾 Logging message to database...");
+        // Log the message
+        await storage.logMessage({
+          guestId: guestId || null,
+          phoneNumber,
+          message: processedMessage, // Log the processed message
+          status: result.status,
+        });
+        console.log("✅ Message logged to database");
+
+        res.json({ success: true, result });
+      } catch (error) {
+        console.error("❌ Error sending message:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        res
+          .status(500)
+          .json({ message: "Failed to send message", error: errorMessage });
       }
-
-      res.json({ success: true, results });
-    } catch (error) {
-      console.error("Error sending bulk messages:", error);
-      res.status(500).json({ message: "Failed to send bulk messages" });
     }
-  });
+  );
 
-  app.get("/api/admin/message-logs", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const { guestId } = req.query;
-      const logs = await storage.getMessageLogs(guestId as string);
-      res.json(logs);
-    } catch (error) {
-      console.error("Error fetching message logs:", error);
-      res.status(500).json({ message: "Failed to fetch message logs" });
-    }
-  });
+  app.post(
+    "/api/admin/message/bulk",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const { guestIds, message } = req.body;
 
-  app.get("/api/admin/message-templates", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const templates = await storage.getAllMessageTemplates();
-      res.json(templates);
-    } catch (error) {
-      console.error("Error fetching message templates:", error);
-      res.status(500).json({ message: "Failed to fetch message templates" });
+        if (!guestIds || !Array.isArray(guestIds) || !message) {
+          return res
+            .status(400)
+            .json({ message: "Guest IDs and message are required" });
+        }
+
+        const results = [];
+        for (const guestId of guestIds) {
+          const guest = await storage.getGuest(guestId);
+          if (guest && guest.phoneWhatsapp) {
+            try {
+              // Process message template with guest data
+              const personalizedMessage = processMessageTemplate(
+                message,
+                guest
+              );
+
+              const result = await sendWhatsAppMessage(
+                guest.phoneWhatsapp,
+                personalizedMessage
+              );
+              await storage.logMessage({
+                guestId,
+                phoneNumber: guest.phoneWhatsapp,
+                message: personalizedMessage, // Log the personalized message
+                status: result.status,
+              });
+              results.push({ guestId, success: true });
+            } catch (error) {
+              console.error(
+                `Failed to send message to guest ${guestId}:`,
+                error
+              );
+              results.push({
+                guestId,
+                success: false,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+        }
+
+        res.json({ success: true, results });
+      } catch (error) {
+        console.error("Error sending bulk messages:", error);
+        res.status(500).json({ message: "Failed to send bulk messages" });
+      }
     }
-  });
+  );
+
+  app.get(
+    "/api/admin/message-logs",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const { guestId } = req.query;
+        const logs = await storage.getMessageLogs(guestId as string);
+        res.json(logs);
+      } catch (error) {
+        console.error("Error fetching message logs:", error);
+        res.status(500).json({ message: "Failed to fetch message logs" });
+      }
+    }
+  );
+
+  app.get(
+    "/api/admin/message-templates",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const templates = await storage.getAllMessageTemplates();
+        res.json(templates);
+      } catch (error) {
+        console.error("Error fetching message templates:", error);
+        res.status(500).json({ message: "Failed to fetch message templates" });
+      }
+    }
+  );
 
   app.get("/api/qr-code", (req, res) => {
     try {
-      const baseUrl = process.env.REPLIT_DOMAINS ? 
-        `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 
-        `${req.protocol}://${req.get('host')}`;
-      
+      const baseUrl = process.env.REPLIT_DOMAINS
+        ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
+        : `${req.protocol}://${req.get("host")}`;
+
       const qrData = `${baseUrl}/photo-upload`;
-      
+
       // In a real implementation, you would generate an actual QR code here
       // For now, return the URL that should be encoded
-      res.json({ 
+      res.json({
         qrCodeUrl: qrData,
         // You could also return a data URL for an actual QR code image
-        message: "Scan to upload wedding photos" 
+        message: "Scan to upload wedding photos",
       });
     } catch (error) {
       console.error("Error generating QR code:", error);
