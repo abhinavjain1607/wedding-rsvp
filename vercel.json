@@ -2,9 +2,10 @@
   "version": 2,
   "installCommand": "npm install --registry=https://registry.npmjs.org/ --no-audit --no-fund",
   "buildCommand": "npm run build",
-  "functions": {
-    "dist/index.js": {
-      "runtime": "nodejs18.x"
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/server"
     }
-  }
+  ]
 }
