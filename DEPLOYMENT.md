@@ -2,7 +2,13 @@
 
 ## Vercel Deployment
 
-### Quick Fix for npm E401 Error
+### Quick Fix for Build Errors
+
+**✅ FIXED: "vite: command not found" Error**
+
+- Moved build dependencies (`vite`, `esbuild`, `typescript`, etc.) to main `dependencies`
+- Updated Vercel install command to include dev dependencies
+- Removed conflicting root `index.js` file
 
 **If you're still getting npm E401 errors, try these additional steps:**
 
