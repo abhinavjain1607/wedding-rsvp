@@ -38,7 +38,7 @@ export default defineConfig({
       },
       // Disable native binary usage
       onwarn: (warning, warn) => {
-        if (warning.code === 'MISSING_GLOBAL_NAME') return;
+        if (warning.code === "MISSING_GLOBAL_NAME") return;
         warn(warning);
       },
     },
@@ -52,7 +52,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     // Force pre-bundling to avoid runtime issues
-    include: ['react', 'react-dom'],
+    include: ["react", "react-dom"],
   },
   server: {
     fs: {

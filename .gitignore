@@ -37,3 +37,4 @@ yarn-error.log*
 
 # Keep .npmrc for deployment
 !.npmrc
+uploads/
