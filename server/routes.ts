@@ -143,102 +143,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Debug endpoint for local development
   app.get("/api/debug/user", (req: any, res) => {
     console.log("Debug user endpoint hit");
-    console.log("req.user:", req.user);
-    console.log("req.isAuthenticated():", req.isAuthenticated?.());
+    const adminPassword = req.headers['x-admin-password'] as string;
+    const expectedPassword = process.env.ADMIN_PASSWORD;
+    const isAuth = !expectedPassword || adminPassword === expectedPassword;
+    
     res.json({
-      user: req.user,
-      isAuthenticated: req.isAuthenticated?.(),
-      session: req.session,
+      isAuthenticated: isAuth,
+      hasAdminPassword: !!expectedPassword,
+      adminPasswordProvided: !!adminPassword,
     });
   });
 
   // Auth routes
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
-      // Handle local development differently
-      if (process.env.NODE_ENV === "development" && !process.env.REPL_ID) {
-        console.log("Local dev - returning user from session");
-        const user = req.user || req.session?.user;
-        if (user) {
-          return res.json({
-            id: user.id || "local-user-id",
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            profileImageUrl: user.profileImageUrl || "",
-          });
+      // Return a simple admin user since we have simple authentication
+      res.json({
+        user: {
+          sub: "admin",
+          email: "admin@wedding.com", 
+          first_name: "Admin",
+          last_name: "User",
+          profileImageUrl: null
         }
-      }
-
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 
-  // Local login endpoint for development
-  app.post("/api/local-login", async (req: any, res) => {
+  // Local login endpoint (for frontend compatibility)
+  app.post("/api/local-login", async (req, res) => {
     try {
-      console.log("Login request received:", req.body);
-      if (process.env.NODE_ENV === "development" && !process.env.REPL_ID) {
-        const { email, password } = req.body;
+      const { email, password } = req.body;
+      const expectedPassword = process.env.ADMIN_PASSWORD;
 
-        console.log(
-          "Extracted email:",
-          email,
-          "password:",
-          password ? "***" : "undefined"
-        );
-
-        if (!email || !password) {
-          console.log("Validation failed - missing email or password");
-          return res
-            .status(400)
-            .json({ message: "Email and password are required" });
-        }
-
-        // Verify admin credentials
-        const isValidAdmin = await storage.verifyAdminPassword(email, password);
-        if (!isValidAdmin) {
-          return res.status(403).json({ message: "Invalid email or password" });
-        }
-
-        // Get admin details
-        const admin = await storage.getAdmin(email);
-        if (!admin) {
-          return res.status(403).json({ message: "Admin not found" });
-        }
-
-        // Create user session
+      if (!expectedPassword) {
+        // If no admin password is set, allow access (for development)
         const userData = {
-          id: `local-${Date.now()}`,
-          email: admin.email,
-          firstName: admin.name?.split(" ")[0] || "Admin",
-          lastName: admin.name?.split(" ").slice(1).join(" ") || "",
+          id: "admin",
+          email: email || "admin@wedding.com",
+          firstName: "Admin",
+          lastName: "User",
           profileImageUrl: "",
         };
-
-        // Use passport login or session
-        req.logIn(userData, (err: any) => {
-          if (err) {
-            console.error("Local login error:", err);
-            return res.status(500).json({ message: "Login failed" });
-          }
-
-          // Also store in session as backup
-          req.session.user = userData;
-
-          console.log("Local login successful for:", email);
-          res.json({ message: "Login successful", user: userData });
+        return res.json({ 
+          message: "Login successful (no password configured)", 
+          user: userData,
+          success: true 
         });
-      } else {
-        res
-          .status(404)
-          .json({ message: "Endpoint not available in production" });
       }
+
+      if (password === expectedPassword) {
+        const userData = {
+          id: "admin",
+          email: email || "admin@wedding.com", 
+          firstName: "Admin",
+          lastName: "User",
+          profileImageUrl: "",
+        };
+        return res.json({ 
+          message: "Login successful", 
+          user: userData,
+          success: true 
+        });
+      }
+
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid password" 
+      });
     } catch (error) {
       console.error("Local login error:", error);
       res.status(500).json({ message: "Login failed" });
@@ -623,7 +598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const image = await storage.createGalleryImage({
             imageUrl,
             caption: req.body.caption || "",
-            uploadedBy: (req.user as any)?.claims?.email || "admin",
+            uploadedBy: "admin",
           });
           uploadedImages.push(image);
         }
