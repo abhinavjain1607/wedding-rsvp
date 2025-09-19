@@ -1,0 +1,12 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Heart -->
+  <path d="M256 384l-96-96c-32-32-32-80 0-112s80-32 112 0c32-32 80-32 112 0s32 80 0 112l-96 96z" fill="#e91e63"/>
+  
+  <!-- Rings -->
+  <circle cx="192" cy="192" r="48" fill="none" stroke="#ffd700" stroke-width="16"/>
+  <circle cx="320" cy="192" r="48" fill="none" stroke="#ffd700" stroke-width="16"/>
+  
+  <!-- Decorative flourish -->
+  <path d="M128 128c-24-24-48-24-48 0s24 24 48 0" fill="none" stroke="#e91e63" stroke-width="6"/>
+  <path d="M384 128c24-24 48-24 48 0s-24 24-48 0" fill="none" stroke="#e91e63" stroke-width="6"/>
+</svg>

@@ -1,12 +1,12 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
-  MessageSquare, 
-  LogOut 
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  MessageSquare,
+  LogOut,
 } from "lucide-react";
 
 export default function AdminNavigation() {
@@ -14,7 +14,10 @@ export default function AdminNavigation() {
   const { user } = useAuth();
 
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    // Clear any stored auth state and redirect to home
+    localStorage.removeItem("admin-auth");
+    sessionStorage.clear();
+    window.location.href = "/";
   };
 
   const navItems = [
@@ -24,21 +27,34 @@ export default function AdminNavigation() {
   ];
 
   return (
-    <nav className="bg-card border-b border-border" data-testid="admin-navigation">
+    <nav
+      className="bg-card border-b border-border"
+      data-testid="admin-navigation"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-8">
             <Link href="/admin">
-              <h1 className="text-xl font-semibold text-foreground cursor-pointer" data-testid="admin-logo">
-                Wedding Admin
-              </h1>
+              <div className="flex items-center space-x-3 cursor-pointer">
+                <img
+                  src="/images/logo.svg"
+                  alt="Wedding Admin Logo"
+                  className="w-6 h-6 text-primary"
+                />
+                <h1
+                  className="text-xl font-semibold text-foreground"
+                  data-testid="admin-logo"
+                >
+                  Wedding Admin
+                </h1>
+              </div>
             </Link>
-            
+
             <div className="hidden md:flex items-center space-x-6">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location === item.href;
-                
+
                 return (
                   <Link key={item.href} href={item.href}>
                     <button
@@ -57,14 +73,14 @@ export default function AdminNavigation() {
               })}
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <Link href="/">
               <Button variant="ghost" size="sm" data-testid="admin-nav-home">
                 View Site
               </Button>
             </Link>
-            
+
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <span data-testid="admin-user-name">
                 {(user as any)?.firstName || (user as any)?.email || "Admin"}

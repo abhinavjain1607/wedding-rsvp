@@ -39,7 +39,7 @@ const step1Schema = z.object({
   email: z.string().email("Valid email is required"),
   phone: z.string().min(1, "Phone number is required"),
   phoneWhatsapp: z.string().min(1, "WhatsApp number is required"),
-  rsvpStatus: z.enum(["attending", "declined", "tentative"]),
+  rsvpStatus: z.enum(["attending", "tentative", "declined"]),
 });
 
 const step2Schema = z.object({
@@ -651,57 +651,55 @@ export default function RSVP() {
                       Will you be able to join us for our special day? 💕
                     </Label>
                     <RadioGroup
-                      onValueChange={(value) =>
+                      value={step1Form.watch("rsvpStatus")}
+                      onValueChange={(value) => {
                         step1Form.setValue(
                           "rsvpStatus",
-                          value as "attending" | "declined" | "tentative"
-                        )
-                      }
-                      defaultValue={step1Form.getValues("rsvpStatus")}
+                          value as "attending" | "tentative" | "declined"
+                        );
+                      }}
                       className="space-y-3"
                     >
-                      <div className="flex items-center space-x-3 p-4 border border-input rounded-lg hover:bg-pink-50 cursor-pointer">
+                      <Label
+                        htmlFor="attending"
+                        className="flex items-center space-x-3 p-4 border border-input rounded-lg hover:bg-pink-50 cursor-pointer"
+                      >
                         <RadioGroupItem value="attending" id="attending" />
                         <div>
-                          <Label
-                            htmlFor="attending"
-                            className="font-medium cursor-pointer"
-                          >
-                            Yes, absolutely! 🎉
-                          </Label>
+                          <div className="font-medium">Yes, absolutely! 🎉</div>
                           <p className="text-sm text-muted-foreground">
                             We're thrilled you can make it!
                           </p>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-3 p-4 border border-input rounded-lg hover:bg-yellow-50 cursor-pointer">
+                      </Label>
+                      <Label
+                        htmlFor="tentative"
+                        className="flex items-center space-x-3 p-4 border border-input rounded-lg hover:bg-yellow-50 cursor-pointer"
+                      >
                         <RadioGroupItem value="tentative" id="tentative" />
                         <div>
-                          <Label
-                            htmlFor="tentative"
-                            className="font-medium cursor-pointer"
-                          >
+                          <div className="font-medium">
                             Maybe, still figuring it out 🤔
-                          </Label>
+                          </div>
                           <p className="text-sm text-muted-foreground">
                             Let us know when you can!
                           </p>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-3 p-4 border border-input rounded-lg hover:bg-gray-50 cursor-pointer">
+                      </Label>
+                      <Label
+                        htmlFor="declined"
+                        className="flex items-center space-x-3 p-4 border border-input rounded-lg hover:bg-gray-50 cursor-pointer"
+                      >
                         <RadioGroupItem value="declined" id="declined" />
                         <div>
-                          <Label
-                            htmlFor="declined"
-                            className="font-medium cursor-pointer"
-                          >
+                          <div className="font-medium">
                             Sorry, can't make it 😔
-                          </Label>
+                          </div>
                           <p className="text-sm text-muted-foreground">
                             We'll miss you but understand
                           </p>
                         </div>
-                      </div>
+                      </Label>
                     </RadioGroup>
                     {step1Form.formState.errors.rsvpStatus && (
                       <p className="text-sm text-destructive mt-1">

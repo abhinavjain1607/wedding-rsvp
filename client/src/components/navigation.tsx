@@ -37,12 +37,19 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
             <Link href="/">
-              <h1
-                className="text-xl font-serif font-semibold text-primary cursor-pointer"
-                data-testid="nav-logo"
-              >
-                Sneha & Abhinav
-              </h1>
+              <div className="flex items-center space-x-3 cursor-pointer">
+                <img
+                  src="/images/logo.svg"
+                  alt="Sneha & Abhinav Wedding Logo"
+                  className="w-8 h-8 text-primary"
+                />
+                <h1
+                  className="text-xl font-serif font-semibold text-primary"
+                  data-testid="nav-logo"
+                >
+                  Sneha & Abhinav
+                </h1>
+              </div>
             </Link>
           </div>
 

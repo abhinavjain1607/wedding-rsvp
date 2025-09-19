@@ -468,7 +468,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   if (process.env.NODE_ENV === "development") {
     const publicImagesPath = path.join(process.cwd(), "client", "public");
     app.use("/images", express.static(path.join(publicImagesPath, "images")));
-    console.log(`🖼️  Serving static images from: ${path.join(publicImagesPath, "images")}`);
+    console.log(
+      `🖼️  Serving static images from: ${path.join(publicImagesPath, "images")}`
+    );
   }
 
   // Admin routes
