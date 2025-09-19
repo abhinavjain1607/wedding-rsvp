@@ -44,7 +44,7 @@ export default function Home() {
       >
         <div className="absolute inset-0 z-0">
           <img
-            src="https://photos.google.com/share/AF1QipO2yip3mU0myxbQVVF0RFxA9790IheAsVvI8bJnshAJ2gedjFf5ByVRY1gHt_07bA/photo/AF1QipP8JCRLv-uefX5mw4FKob0_p65h_Sw_B4nd0XcV?key=Mm5oTDlwZG14WnBoNF9iUUpPY05acFBVTVFKdEFn"
+            src="/images/hero/wedding-couple.jpg"
             alt="Elegant wedding couple portrait"
             className="w-full h-full object-cover opacity-30"
           />
@@ -104,7 +104,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <img
-                src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"
+                src="/images/story/couple-story.jpg"
                 alt="Romantic couple embracing outdoors"
                 className="rounded-lg shadow-lg w-full"
                 data-testid="story-image"
@@ -233,7 +233,7 @@ export default function Home() {
               <div className="grid md:grid-cols-2 gap-8 items-center">
                 <div>
                   <img
-                    src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=500"
+                    src="/images/venue/shakti-vilas.jpg"
                     alt="Elegant villa overlooking Lake Como with manicured gardens"
                     className="rounded-lg shadow-md w-full"
                     data-testid="venue-image"
