@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "installCommand": "rm -rf node_modules package-lock.json && npm install --include=dev --registry=https://registry.npmjs.org/ --no-audit --no-fund",
-  "buildCommand": "npm run build",
+  "installCommand": "rm -rf node_modules package-lock.json && npm install --include=dev --include=optional --force && npm install @rollup/rollup-linux-x64-gnu@4.24.4",
+  "buildCommand": "ROLLUP_NO_NATIVE=true npm run build:safe",
   "outputDirectory": "dist/public",
   "rewrites": [
     {

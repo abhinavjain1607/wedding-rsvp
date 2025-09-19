@@ -30,6 +30,16 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      // Force Rollup to not use native binaries
+      output: {
+        format: 'es'
+      }
+    },
+  },
+  define: {
+    // Disable native binaries
+    'process.env.ROLLUP_NO_NATIVE': JSON.stringify('true'),
   },
   server: {
     fs: {
