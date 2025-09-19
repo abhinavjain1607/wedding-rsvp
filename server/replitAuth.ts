@@ -199,50 +199,61 @@ interface AuthenticatedUser {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  if (isLocalDev) {
-    // In local development, check both req.user and session
-    console.log("isAuthenticated check - local dev mode");
-    console.log("req.user:", req.user);
-    console.log("req.session.user:", (req as any).session?.user);
-    console.log("req.isAuthenticated():", req.isAuthenticated?.());
+  try {
+    if (isLocalDev) {
+      // In local development, check both req.user and session
+      console.log("isAuthenticated check - local dev mode");
+      console.log("req.user:", req.user);
+      console.log("req.session.user:", (req as any).session?.user);
+      console.log("req.isAuthenticated():", req.isAuthenticated?.());
 
-    const user = req.user || (req as any).session?.user;
-    if (user) {
-      console.log("User authenticated, proceeding");
+      const user = req.user || (req as any).session?.user;
+      if (user) {
+        console.log("User authenticated, proceeding");
+        return next();
+      }
+      console.log("No user found, returning unauthorized");
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // Production authentication
+    const user = req.user as AuthenticatedUser;
+
+    if (!req.isAuthenticated() || !user?.expires_at) {
+      console.log("Production auth failed: not authenticated or no expires_at");
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    if (now <= user.expires_at) {
       return next();
     }
-    console.log("No user found, returning unauthorized");
-    return res.status(401).json({ message: "Unauthorized" });
-  }
 
-  const user = req.user as AuthenticatedUser;
-
-  if (!req.isAuthenticated() || !user.expires_at) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
-    return next();
-  }
-
-  const refreshToken = user.refresh_token;
-  if (!refreshToken) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
-  try {
-    const config = await getOidcConfig();
-    if (!config) {
+    const refreshToken = user.refresh_token;
+    if (!refreshToken) {
+      console.log("Production auth failed: no refresh token");
       res.status(401).json({ message: "Unauthorized" });
       return;
     }
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    return next();
+
+    try {
+      const config = await getOidcConfig();
+      if (!config) {
+        console.log("Production auth failed: no OIDC config");
+        res.status(401).json({ message: "Unauthorized" });
+        return;
+      }
+      const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+      updateUserSession(user, tokenResponse);
+      return next();
+    } catch (error) {
+      console.log("Production auth failed: token refresh error:", error);
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
   } catch (error) {
-    res.status(401).json({ message: "Unauthorized" });
+    console.error("isAuthenticated middleware error:", error);
+    res.status(500).json({ message: "Authentication system error" });
     return;
   }
 };

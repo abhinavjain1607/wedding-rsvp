@@ -64,8 +64,18 @@ async function initializeApp() {
 
 // For Vercel serverless functions
 export default async function handler(req: any, res: any) {
-  const app = await initializeApp();
-  return app(req, res);
+  try {
+    console.log(`${req.method} ${req.url} - Starting request`);
+    const app = await initializeApp();
+    return app(req, res);
+  } catch (error) {
+    console.error('Vercel handler error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ 
+      message: 'Server initialization failed',
+      error: process.env.NODE_ENV === 'development' ? errorMessage : 'Internal server error'
+    });
+  }
 }
 
 // Also export the app for other uses

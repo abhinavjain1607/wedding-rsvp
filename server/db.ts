@@ -6,9 +6,11 @@ import ws from "ws";
 import * as schema from "@shared/schema";
 
 if (!process.env.DATABASE_URL) {
-  throw new Error(
+  const error = new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?"
   );
+  console.error("Database configuration error:", error.message);
+  throw error;
 }
 
 // Check if we're in local development mode
@@ -38,9 +40,15 @@ if (isLocalDev) {
 } else {
   // Use Neon serverless for production
   console.log("☁️ Using Neon serverless connection");
-  neonConfig.webSocketConstructor = ws;
-  pool = new NeonPool({ connectionString: process.env.DATABASE_URL });
-  db = drizzleNeon({ client: pool, schema });
+  try {
+    neonConfig.webSocketConstructor = ws;
+    pool = new NeonPool({ connectionString: process.env.DATABASE_URL });
+    db = drizzleNeon({ client: pool, schema });
+    console.log("✅ Database connection initialized successfully");
+  } catch (error) {
+    console.error("❌ Failed to initialize database connection:", error);
+    throw error;
+  }
 }
 
 export { pool, db };
