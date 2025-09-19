@@ -100,12 +100,21 @@ export default function RSVP() {
   // Step 1 mutation
   const step1Mutation = useMutation({
     mutationFn: async (data: Step1FormData) => {
+      console.log("Step 1 form data being sent:", data);
+
       const payload = {
         ...data,
         step1Completed: true,
       };
+
+      console.log("Step 1 payload:", payload);
+
       const response = await apiRequest("POST", "/api/guests/step1", payload);
-      return response.json();
+      const result = await response.json();
+
+      console.log("Step 1 response:", result);
+
+      return result;
     },
     onSuccess: (guest) => {
       setCurrentGuestId(guest.id);
@@ -191,15 +200,38 @@ export default function RSVP() {
   const step2Mutation = useMutation({
     mutationFn: async (data: Step2FormData & { idDocument?: File }) => {
       const formData = new FormData();
+
+      // Log the data being sent for debugging
+      console.log("Step 2 form data:", data);
+
       Object.entries(data).forEach(([key, value]) => {
-        if (key !== "idDocument" && value !== undefined) {
-          formData.append(key, value.toString());
+        if (key !== "idDocument") {
+          // Handle different value types properly
+          if (value !== undefined && value !== null) {
+            if (typeof value === "boolean") {
+              formData.append(key, value.toString());
+            } else if (typeof value === "string") {
+              formData.append(key, value);
+            } else {
+              formData.append(key, String(value));
+            }
+          } else {
+            // Send null/undefined as empty string for optional fields
+            formData.append(key, "");
+          }
         }
       });
+
       if (data.idDocument) {
         formData.append("idDocument", data.idDocument);
       }
       formData.append("step2Completed", "true");
+
+      // Log FormData contents for debugging
+      console.log("FormData entries:");
+      formData.forEach((value, key) => {
+        console.log(`${key}:`, value);
+      });
 
       return apiRequest("PUT", `/api/guests/${currentGuestId}/step2`, formData);
     },
@@ -292,10 +324,19 @@ export default function RSVP() {
   };
 
   const onStep2Submit = (data: Step2FormData) => {
+    console.log("Step 2 form submit triggered with data:", data);
+
+    // Get all current form values to ensure we have everything
+    const allFormValues = step2Form.getValues();
+    console.log("All step2Form values:", allFormValues);
+
     const submitData = {
-      ...data,
+      ...allFormValues, // Use all form values instead of just the submitted data
+      ...data, // Override with any explicitly passed data
       idDocument: selectedFile || undefined,
     };
+
+    console.log("Final submit data:", submitData);
     step2Mutation.mutate(submitData);
   };
 

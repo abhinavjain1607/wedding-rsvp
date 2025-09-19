@@ -178,6 +178,26 @@ export default function GuestTable({ guests }: GuestTableProps) {
     });
   };
 
+  const formatPickupDateTime = (pickupDate: string, pickupTime: string) => {
+    // Convert date format (e.g., "dec10" -> "Dec 10")
+    const dateFormatted = pickupDate.replace(
+      /^(dec|december)(\d+)$/i,
+      (_, month, day) => {
+        return `Dec ${day}`;
+      }
+    );
+
+    // Convert time format (e.g., "12:30pm" -> "12:30 PM")
+    const timeFormatted = pickupTime.replace(
+      /(\d+):(\d+)(am|pm)/i,
+      (_, hour, minute, period) => {
+        return `${hour}:${minute} ${period.toUpperCase()}`;
+      }
+    );
+
+    return `${dateFormatted} at ${timeFormatted}`;
+  };
+
   return (
     <div className="space-y-4" data-testid="guest-table">
       {/* Filters and Actions */}
@@ -241,9 +261,9 @@ export default function GuestTable({ guests }: GuestTableProps) {
               <TableHead>Contact</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Completion</TableHead>
-              <TableHead>Accommodation</TableHead>
+              <TableHead>Pickup Date & Time</TableHead>
+              <TableHead>Document Uploaded</TableHead>
               <TableHead>Transport</TableHead>
-              <TableHead>Added</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -251,7 +271,7 @@ export default function GuestTable({ guests }: GuestTableProps) {
             {filteredGuests.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={9}
+                  colSpan={8}
                   className="text-center py-8 text-muted-foreground"
                 >
                   {guests.length === 0
@@ -294,26 +314,37 @@ export default function GuestTable({ guests }: GuestTableProps) {
                   </TableCell>
                   <TableCell>{getCompletionBadge(guest)}</TableCell>
                   <TableCell>
-                    <span
-                      className={
-                        guest.requiresAccommodation
-                          ? "text-foreground"
-                          : "text-muted-foreground"
-                      }
-                    >
-                      {guest.requiresAccommodation ? "Yes" : "No"}
-                    </span>
+                    <div className="text-sm">
+                      {guest.pickupDate && guest.pickupTime ? (
+                        <span className="text-foreground">
+                          {formatPickupDateTime(
+                            guest.pickupDate,
+                            guest.pickupTime
+                          )}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          Not specified
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {guest.idUploadUrl ? (
+                        <span className="text-green-600 font-medium">
+                          ✓ Uploaded
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          Not uploaded
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <span className="capitalize text-sm">
                       {guest.transportMode || "Not specified"}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground">
-                      {guest.createdAt
-                        ? formatDate(guest.createdAt.toString())
-                        : "N/A"}
                     </span>
                   </TableCell>
                   <TableCell>

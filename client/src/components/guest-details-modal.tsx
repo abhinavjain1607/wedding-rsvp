@@ -283,197 +283,207 @@ export default function GuestDetailsModal({
             </CardContent>
           </Card>
 
-          {/* ID Document - Show for all guests who provided ID info */}
-          {(guest.idDocumentType || guest.idUploadUrl) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-orange-600" />
-                  ID Document
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {guest.idDocumentType && (
-                    <div>
-                      <p className="text-sm font-medium">Document Type</p>
-                      <p className="text-sm text-muted-foreground">
-                        {getIdDocumentTypeLabel(guest.idDocumentType)}
-                      </p>
-                    </div>
-                  )}
-                  {guest.idUploadUrl && (
-                    <div>
-                      <p className="text-sm font-medium">Document File</p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-1"
-                        onClick={() =>
-                          window.open(guest.idUploadUrl!, "_blank")
-                        }
-                      >
-                        <Download className="w-3 h-3 mr-1" />
-                        View Document
-                      </Button>
-                    </div>
-                  )}
+          {/* Step 2: ID Document */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="w-5 h-5 text-orange-600" />
+                ID Document
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium">Document Type</p>
+                  <p className="text-sm text-muted-foreground">
+                    {guest.idDocumentType
+                      ? getIdDocumentTypeLabel(guest.idDocumentType)
+                      : "Not provided"}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Transport Details - Show for all guests who provided transport info */}
-          {guest.transportMode && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Plane className="w-5 h-5 text-teal-600" />
-                  Transport Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3">
-                    {getTransportModeIcon(guest.transportMode)}
-                    <div>
-                      <p className="text-sm font-medium">Mode of Transport</p>
-                      <p className="text-sm text-muted-foreground capitalize">
-                        {guest.transportMode.replace("_", " ")}
-                      </p>
-                    </div>
+                {guest.idUploadUrl ? (
+                  <div>
+                    <p className="text-sm font-medium">Document File</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-1"
+                      onClick={() => window.open(guest.idUploadUrl!, "_blank")}
+                    >
+                      <Download className="w-3 h-3 mr-1" />
+                      View Document
+                    </Button>
                   </div>
-                  {guest.flightNumber && (
-                    <div>
-                      <p className="text-sm font-medium">Flight Number</p>
-                      <p className="text-sm text-muted-foreground">
-                        {guest.flightNumber}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Taxi Service Requirements */}
-          {(guest.needsTaxiDec10 ||
-            guest.needsTaxiDec11 ||
-            guest.needsTaxiReturn) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Car className="w-5 h-5 text-indigo-600" />
-                  Taxi Service Requirements
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {guest.needsTaxiDec10 && (
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <div>
-                      <p className="text-sm font-medium">
-                        December 10th Pickup
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Pickup required from airport/station
-                      </p>
-                    </div>
+                ) : (
+                  <div>
+                    <p className="text-sm font-medium">Document File</p>
+                    <p className="text-sm text-muted-foreground">
+                      Not uploaded
+                    </p>
                   </div>
                 )}
+              </div>
+            </CardContent>
+          </Card>
 
-                {guest.needsTaxiDec11 && (
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <div>
-                      <p className="text-sm font-medium">
-                        December 11th Pickup
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Pickup required from airport/station
-                      </p>
-                    </div>
+          {/* Step 2: Transport Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Plane className="w-5 h-5 text-teal-600" />
+                Transport Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                  {guest.transportMode ? (
+                    getTransportModeIcon(guest.transportMode)
+                  ) : (
+                    <Car className="w-4 h-4" />
+                  )}
+                  <div>
+                    <p className="text-sm font-medium">Mode of Transport</p>
+                    <p className="text-sm text-muted-foreground capitalize">
+                      {guest.transportMode
+                        ? guest.transportMode.replace("_", " ")
+                        : "Not specified"}
+                    </p>
                   </div>
-                )}
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Flight Number</p>
+                  <p className="text-sm text-muted-foreground">
+                    {guest.flightNumber || "Not provided"}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-                {guest.needsTaxiReturn && (
-                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+          {/* Step 2: Taxi Service Requirements */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Car className="w-5 h-5 text-indigo-600" />
+                Taxi Service Requirements
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div
+                  className={`flex items-center gap-3 p-3 rounded-lg ${
+                    guest.needsTaxiDec10 ? "bg-green-50" : "bg-gray-50"
+                  }`}
+                >
+                  {guest.needsTaxiDec10 ? (
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-gray-400" />
+                  )}
+                  <div>
+                    <p className="text-sm font-medium">December 10th Pickup</p>
+                    <p className="text-sm text-muted-foreground">
+                      {guest.needsTaxiDec10 ? "Required" : "Not needed"}
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  className={`flex items-center gap-3 p-3 rounded-lg ${
+                    guest.needsTaxiDec11 ? "bg-green-50" : "bg-gray-50"
+                  }`}
+                >
+                  {guest.needsTaxiDec11 ? (
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-gray-400" />
+                  )}
+                  <div>
+                    <p className="text-sm font-medium">December 11th Pickup</p>
+                    <p className="text-sm text-muted-foreground">
+                      {guest.needsTaxiDec11 ? "Required" : "Not needed"}
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  className={`flex items-center gap-3 p-3 rounded-lg ${
+                    guest.needsTaxiReturn ? "bg-blue-50" : "bg-gray-50"
+                  }`}
+                >
+                  {guest.needsTaxiReturn ? (
                     <Car className="w-5 h-5 text-blue-600" />
-                    <div>
-                      <p className="text-sm font-medium">Return Taxi</p>
-                      <p className="text-sm text-muted-foreground">
-                        Return taxi to airport/station (till Dec 12th, 12 PM)
-                      </p>
-                    </div>
+                  ) : (
+                    <XCircle className="w-5 h-5 text-gray-400" />
+                  )}
+                  <div>
+                    <p className="text-sm font-medium">Return Taxi</p>
+                    <p className="text-sm text-muted-foreground">
+                      {guest.needsTaxiReturn ? "Required" : "Not needed"}
+                    </p>
                   </div>
-                )}
+                </div>
+              </div>
 
-                {/* Pickup and Dropoff Timing Details */}
-                {(guest.pickupDate ||
-                  guest.pickupTime ||
-                  guest.dropoffDate ||
-                  guest.dropoffTime) && (
-                  <div className="border-t pt-4 mt-4">
-                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      Pickup & Dropoff Details
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      {guest.pickupDate && (
-                        <div>
-                          <p className="font-medium">Pickup Date</p>
-                          <p className="text-muted-foreground">
-                            {formatPickupDate(guest.pickupDate)}
-                          </p>
-                        </div>
-                      )}
-                      {guest.pickupTime && (
-                        <div>
-                          <p className="font-medium">Pickup Time</p>
-                          <p className="text-muted-foreground">
-                            {formatTime(guest.pickupTime)}
-                          </p>
-                        </div>
-                      )}
-                      {guest.dropoffDate && (
-                        <div>
-                          <p className="font-medium">Dropoff Date</p>
-                          <p className="text-muted-foreground">
-                            {formatPickupDate(guest.dropoffDate)}
-                          </p>
-                        </div>
-                      )}
-                      {guest.dropoffTime && (
-                        <div>
-                          <p className="font-medium">Dropoff Time</p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatTime(guest.dropoffTime)}
-                          </p>
-                        </div>
-                      )}
-                    </div>
+              {/* Pickup and Dropoff Timing Details */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Pickup & Dropoff Details
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="font-medium">Pickup Date</p>
+                    <p className="text-muted-foreground">
+                      {guest.pickupDate
+                        ? formatPickupDate(guest.pickupDate)
+                        : "Not specified"}
+                    </p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                  <div>
+                    <p className="font-medium">Pickup Time</p>
+                    <p className="text-muted-foreground">
+                      {guest.pickupTime
+                        ? formatTime(guest.pickupTime)
+                        : "Not specified"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Dropoff Date</p>
+                    <p className="text-muted-foreground">
+                      {guest.dropoffDate
+                        ? formatPickupDate(guest.dropoffDate)
+                        : "Not specified"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Dropoff Time</p>
+                    <p className="text-sm text-muted-foreground">
+                      {guest.dropoffTime
+                        ? formatTime(guest.dropoffTime)
+                        : "Not specified"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Additional Notes */}
-          {guest.additionalNotes && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-gray-600" />
-                  Additional Notes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {guest.additionalNotes}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+          {/* Step 2: Additional Notes */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="w-5 h-5 text-gray-600" />
+                Additional Notes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {guest.additionalNotes || "No additional notes provided"}
+              </p>
+            </CardContent>
+          </Card>
 
           {/* Guest Entry Details */}
           <Card>

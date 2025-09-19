@@ -276,11 +276,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Guest RSVP routes - Step 1 (Basic Info)
   app.post("/api/guests/step1", async (req, res) => {
     try {
+      console.log("Step 1 POST request received with body:", req.body);
+
       const guestData = insertGuestStep1Schema.parse(req.body);
+      console.log("Parsed guest data:", guestData);
+
       const guest = await storage.createGuest({
         ...guestData,
         step1Completed: true,
       });
+
+      console.log("Created guest:", guest);
+
       res.status(201).json(guest);
     } catch (error) {
       console.error("Error creating guest step 1:", error);
@@ -311,7 +318,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req, res) => {
       try {
         const { id } = req.params;
-        const guestData = insertGuestStep2Schema.partial().parse(req.body);
+
+        // Log the raw request body for debugging
+        console.log("Raw req.body:", req.body);
+
+        // Convert string boolean values from FormData to actual booleans
+        const processedBody = { ...req.body };
+
+        // Handle boolean fields that come as strings from FormData
+        if (processedBody.needsTaxiDec10 !== undefined) {
+          processedBody.needsTaxiDec10 =
+            processedBody.needsTaxiDec10 === "true";
+        }
+        if (processedBody.needsTaxiDec11 !== undefined) {
+          processedBody.needsTaxiDec11 =
+            processedBody.needsTaxiDec11 === "true";
+        }
+        if (processedBody.needsTaxiReturn !== undefined) {
+          processedBody.needsTaxiReturn =
+            processedBody.needsTaxiReturn === "true";
+        }
+
+        // Handle empty strings as null for optional text fields
+        [
+          "flightNumber",
+          "pickupDate",
+          "pickupTime",
+          "dropoffDate",
+          "dropoffTime",
+          "additionalNotes",
+        ].forEach((field) => {
+          if (processedBody[field] === "") {
+            processedBody[field] = null;
+          }
+        });
+
+        console.log("Processed body:", processedBody);
+
+        const guestData = insertGuestStep2Schema.partial().parse(processedBody);
 
         // Handle file upload if present
         if (req.file) {
