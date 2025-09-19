@@ -50,9 +50,10 @@ const step2Schema = z.object({
     }
   ),
   transportMode: z.string().min(1, "Please select your mode of transport"),
-  needsTaxiDec10: z.boolean(),
-  needsTaxiDec11: z.boolean(),
-  needsTaxiReturn: z.boolean(),
+  needsTransportDec9: z.boolean(),
+  needsTransportDec10: z.boolean(),
+  needsTransportDec11: z.boolean(),
+  needsTransportReturn: z.boolean(),
   flightNumber: z.string().optional(),
   pickupDate: z.string().optional(),
   pickupTime: z.string().optional(),
@@ -87,9 +88,10 @@ export default function RSVP() {
   const step2Form = useForm<Step2FormData>({
     resolver: zodResolver(step2Schema),
     defaultValues: {
-      needsTaxiDec10: false,
-      needsTaxiDec11: false,
-      needsTaxiReturn: false,
+      needsTransportDec9: false,
+      needsTransportDec10: false,
+      needsTransportDec11: false,
+      needsTransportReturn: false,
     },
   });
 
@@ -282,9 +284,10 @@ export default function RSVP() {
         step2Form.reset({
           idDocumentType: guest.idDocumentType,
           transportMode: guest.transportMode || "",
-          needsTaxiDec10: guest.needsTaxiDec10 || false,
-          needsTaxiDec11: guest.needsTaxiDec11 || false,
-          needsTaxiReturn: guest.needsTaxiReturn || false,
+          needsTransportDec9: guest.needsTransportDec9 || false,
+          needsTransportDec10: guest.needsTransportDec10 || false,
+          needsTransportDec11: guest.needsTransportDec11 || false,
+          needsTransportReturn: guest.needsTransportReturn || false,
           flightNumber: guest.flightNumber || "",
           pickupDate: guest.pickupDate || "",
           pickupTime: guest.pickupTime || "",
@@ -292,9 +295,7 @@ export default function RSVP() {
           dropoffTime: guest.dropoffTime || "",
           additionalNotes: guest.additionalNotes || "",
         });
-      }
-
-      // Always start from step1 so users can update their RSVP status
+      } // Always start from step1 so users can update their RSVP status
       setCurrentFlow("step1");
 
       toast({
@@ -883,35 +884,59 @@ export default function RSVP() {
                     </div>
                   </div>
 
-                  {/* Taxi Service Section */}
+                  {/* Transport Service Section */}
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-3">
                       <Calendar className="w-5 h-5 text-pink-500" />
-                      <h3 className="text-lg font-semibold">Taxi Service</h3>
+                      <h3 className="text-lg font-semibold">
+                        Complimentary Transport Service
+                      </h3>
                     </div>
                     <p className="text-sm text-muted-foreground mb-4">
-                      We can arrange taxi service from airport/railway station.
-                      Available times: 6 AM to 12 PM
+                      We provide complimentary transport service from airports
+                      and railway stations. Service available: 6:00 AM - 12:00
+                      PM
                     </p>
 
                     <div className="space-y-3">
                       <div className="flex items-center space-x-3 p-4 border border-input rounded-lg">
                         <input
                           type="checkbox"
-                          id="needsTaxiDec10"
-                          {...step2Form.register("needsTaxiDec10")}
+                          id="needsTransportDec9"
+                          {...step2Form.register("needsTransportDec9")}
                           className="rounded"
                         />
                         <div className="flex-1">
                           <Label
-                            htmlFor="needsTaxiDec10"
+                            htmlFor="needsTransportDec9"
+                            className="font-medium cursor-pointer"
+                          >
+                            Pickup on December 9th
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Airport/station pickup service for guest arrivals
+                            (6:00 AM - 10:00 PM)
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-3 p-4 border border-input rounded-lg">
+                        <input
+                          type="checkbox"
+                          id="needsTransportDec10"
+                          {...step2Form.register("needsTransportDec10")}
+                          className="rounded"
+                        />
+                        <div className="flex-1">
+                          <Label
+                            htmlFor="needsTransportDec10"
                             className="font-medium cursor-pointer"
                           >
                             Pickup on December 10th
                           </Label>
                           <p className="text-sm text-muted-foreground">
-                            Need taxi from airport/station on Dec 10th (6 AM -
-                            12 PM)
+                            Airport/station pickup service for guest arrivals
+                            (6:00 AM - 10:00 PM)
                           </p>
                         </div>
                       </div>
@@ -919,20 +944,20 @@ export default function RSVP() {
                       <div className="flex items-center space-x-3 p-4 border border-input rounded-lg">
                         <input
                           type="checkbox"
-                          id="needsTaxiDec11"
-                          {...step2Form.register("needsTaxiDec11")}
+                          id="needsTransportDec11"
+                          {...step2Form.register("needsTransportDec11")}
                           className="rounded"
                         />
                         <div className="flex-1">
                           <Label
-                            htmlFor="needsTaxiDec11"
+                            htmlFor="needsTransportDec11"
                             className="font-medium cursor-pointer"
                           >
                             Pickup on December 11th
                           </Label>
                           <p className="text-sm text-muted-foreground">
-                            Need taxi from airport/station on Dec 11th (6 AM -
-                            12 PM)
+                            Airport/station pickup service for guest arrivals
+                            (6:00 AM - 10:00 PM)
                           </p>
                         </div>
                       </div>
@@ -940,32 +965,34 @@ export default function RSVP() {
                       <div className="flex items-center space-x-3 p-4 border border-input rounded-lg">
                         <input
                           type="checkbox"
-                          id="needsTaxiReturn"
-                          {...step2Form.register("needsTaxiReturn")}
+                          id="needsTransportReturn"
+                          {...step2Form.register("needsTransportReturn")}
                           className="rounded"
                         />
                         <div className="flex-1">
                           <Label
-                            htmlFor="needsTaxiReturn"
+                            htmlFor="needsTransportReturn"
                             className="font-medium cursor-pointer"
                           >
-                            Return taxi till December 12th
+                            Return Transport Service
                           </Label>
                           <p className="text-sm text-muted-foreground">
-                            Need return taxi to airport/station (till 12 PM on
-                            Dec 12th)
+                            Return transport service to airport/station
+                            (available till 12:00 PM on Dec 12th)
                           </p>
                         </div>
                       </div>
                     </div>
 
                     {/* Time Selection */}
-                    {(step2Form.watch("needsTaxiDec10") ||
-                      step2Form.watch("needsTaxiDec11") ||
-                      step2Form.watch("needsTaxiReturn")) && (
+                    {(step2Form.watch("needsTransportDec9") ||
+                      step2Form.watch("needsTransportDec10") ||
+                      step2Form.watch("needsTransportDec11") ||
+                      step2Form.watch("needsTransportReturn")) && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 p-4 bg-pink-50 rounded-lg">
-                        {(step2Form.watch("needsTaxiDec10") ||
-                          step2Form.watch("needsTaxiDec11")) && (
+                        {(step2Form.watch("needsTransportDec9") ||
+                          step2Form.watch("needsTransportDec10") ||
+                          step2Form.watch("needsTransportDec11")) && (
                           <>
                             <div>
                               <Label htmlFor="pickupDate">Pickup Date</Label>
@@ -979,12 +1006,17 @@ export default function RSVP() {
                                   <SelectValue placeholder="Select date" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {step2Form.watch("needsTaxiDec10") && (
+                                  {step2Form.watch("needsTransportDec9") && (
+                                    <SelectItem value="dec9">
+                                      December 9th
+                                    </SelectItem>
+                                  )}
+                                  {step2Form.watch("needsTransportDec10") && (
                                     <SelectItem value="dec10">
                                       December 10th
                                     </SelectItem>
                                   )}
-                                  {step2Form.watch("needsTaxiDec11") && (
+                                  {step2Form.watch("needsTransportDec11") && (
                                     <SelectItem value="dec11">
                                       December 11th
                                     </SelectItem>
@@ -1110,7 +1142,7 @@ export default function RSVP() {
                           </>
                         )}
 
-                        {step2Form.watch("needsTaxiReturn") && (
+                        {step2Form.watch("needsTransportReturn") && (
                           <>
                             <div>
                               <Label htmlFor="dropoffDate">Dropoff Date</Label>
@@ -1126,6 +1158,9 @@ export default function RSVP() {
                                   <SelectValue placeholder="Select date" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                  <SelectItem value="dec11">
+                                    December 11th
+                                  </SelectItem>
                                   <SelectItem value="dec12">
                                     December 12th
                                   </SelectItem>
@@ -1147,13 +1182,111 @@ export default function RSVP() {
                                   <SelectValue placeholder="Select time" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="6am">6:00 AM</SelectItem>
-                                  <SelectItem value="7am">7:00 AM</SelectItem>
-                                  <SelectItem value="8am">8:00 AM</SelectItem>
-                                  <SelectItem value="9am">9:00 AM</SelectItem>
-                                  <SelectItem value="10am">10:00 AM</SelectItem>
-                                  <SelectItem value="11am">11:00 AM</SelectItem>
-                                  <SelectItem value="12pm">12:00 PM</SelectItem>
+                                  <SelectItem value="6:00am">
+                                    6:00 AM
+                                  </SelectItem>
+                                  <SelectItem value="6:30am">
+                                    6:30 AM
+                                  </SelectItem>
+                                  <SelectItem value="7:00am">
+                                    7:00 AM
+                                  </SelectItem>
+                                  <SelectItem value="7:30am">
+                                    7:30 AM
+                                  </SelectItem>
+                                  <SelectItem value="8:00am">
+                                    8:00 AM
+                                  </SelectItem>
+                                  <SelectItem value="8:30am">
+                                    8:30 AM
+                                  </SelectItem>
+                                  <SelectItem value="9:00am">
+                                    9:00 AM
+                                  </SelectItem>
+                                  <SelectItem value="9:30am">
+                                    9:30 AM
+                                  </SelectItem>
+                                  <SelectItem value="10:00am">
+                                    10:00 AM
+                                  </SelectItem>
+                                  <SelectItem value="10:30am">
+                                    10:30 AM
+                                  </SelectItem>
+                                  <SelectItem value="11:00am">
+                                    11:00 AM
+                                  </SelectItem>
+                                  <SelectItem value="11:30am">
+                                    11:30 AM
+                                  </SelectItem>
+                                  <SelectItem value="12:00pm">
+                                    12:00 PM
+                                  </SelectItem>
+                                  {/* Extended hours for December 11th */}
+                                  {step2Form.watch("dropoffDate") ===
+                                    "dec11" && (
+                                    <>
+                                      <SelectItem value="12:30pm">
+                                        12:30 PM
+                                      </SelectItem>
+                                      <SelectItem value="1:00pm">
+                                        1:00 PM
+                                      </SelectItem>
+                                      <SelectItem value="1:30pm">
+                                        1:30 PM
+                                      </SelectItem>
+                                      <SelectItem value="2:00pm">
+                                        2:00 PM
+                                      </SelectItem>
+                                      <SelectItem value="2:30pm">
+                                        2:30 PM
+                                      </SelectItem>
+                                      <SelectItem value="3:00pm">
+                                        3:00 PM
+                                      </SelectItem>
+                                      <SelectItem value="3:30pm">
+                                        3:30 PM
+                                      </SelectItem>
+                                      <SelectItem value="4:00pm">
+                                        4:00 PM
+                                      </SelectItem>
+                                      <SelectItem value="4:30pm">
+                                        4:30 PM
+                                      </SelectItem>
+                                      <SelectItem value="5:00pm">
+                                        5:00 PM
+                                      </SelectItem>
+                                      <SelectItem value="5:30pm">
+                                        5:30 PM
+                                      </SelectItem>
+                                      <SelectItem value="6:00pm">
+                                        6:00 PM
+                                      </SelectItem>
+                                      <SelectItem value="6:30pm">
+                                        6:30 PM
+                                      </SelectItem>
+                                      <SelectItem value="7:00pm">
+                                        7:00 PM
+                                      </SelectItem>
+                                      <SelectItem value="7:30pm">
+                                        7:30 PM
+                                      </SelectItem>
+                                      <SelectItem value="8:00pm">
+                                        8:00 PM
+                                      </SelectItem>
+                                      <SelectItem value="8:30pm">
+                                        8:30 PM
+                                      </SelectItem>
+                                      <SelectItem value="9:00pm">
+                                        9:00 PM
+                                      </SelectItem>
+                                      <SelectItem value="9:30pm">
+                                        9:30 PM
+                                      </SelectItem>
+                                      <SelectItem value="10:00pm">
+                                        10:00 PM
+                                      </SelectItem>
+                                    </>
+                                  )}
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1161,6 +1294,38 @@ export default function RSVP() {
                         )}
                       </div>
                     )}
+
+                    {/* Transport Service Disclaimer */}
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-start space-x-2">
+                        <svg
+                          className="w-5 h-5 text-blue-500 mt-0.5"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <div>
+                          <h4 className="text-sm font-medium text-blue-900 mb-2">
+                            Important Information
+                          </h4>
+                          <p className="text-sm text-blue-800">
+                            <strong>Drop off dates:</strong> 11th (till 10:00
+                            PM) and 12th December (till 12:00 PM)
+                            <br />
+                            <strong>Check-in time:</strong> 12:00 PM (We can
+                            accommodate early check-ins as well)
+                            <br />
+                            <strong>Check-out time:</strong> 11:00 AM on 12th
+                            December
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Additional Notes */}

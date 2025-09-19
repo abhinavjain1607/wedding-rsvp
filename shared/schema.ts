@@ -44,17 +44,18 @@ export const guests = pgTable("guests", {
   // Transport details
   transportMode: varchar("transport_mode"), // flight, train, driving, bus, other
 
-  // Taxi service requirements
-  needsTaxiDec10: boolean("needs_taxi_dec10").default(false),
-  needsTaxiDec11: boolean("needs_taxi_dec11").default(false),
-  needsTaxiReturn: boolean("needs_taxi_return").default(false),
+  // Transport service requirements
+  needsTransportDec9: boolean("needs_transport_dec9").default(false),
+  needsTransportDec10: boolean("needs_transport_dec10").default(false),
+  needsTransportDec11: boolean("needs_transport_dec11").default(false),
+  needsTransportReturn: boolean("needs_transport_return").default(false),
 
   // Flight and timing details
   flightNumber: varchar("flight_number"),
-  pickupDate: varchar("pickup_date"), // Dec 10 or Dec 11
+  pickupDate: varchar("pickup_date"), // Dec 9, 10 or Dec 11
   pickupTime: varchar("pickup_time"), // 6am to 12pm options
-  dropoffDate: varchar("dropoff_date"), // till Dec 12
-  dropoffTime: varchar("dropoff_time"), // till 12pm
+  dropoffDate: varchar("dropoff_date"), // Dec 11 or Dec 12 (till afternoon)
+  dropoffTime: varchar("dropoff_time"), // till 2pm on Dec 12
 
   // Additional information
   additionalNotes: text("additional_notes"),
@@ -153,9 +154,10 @@ export const insertGuestStep2Schema = createInsertSchema(guests).pick({
   idDocumentType: true,
   idUploadUrl: true,
   transportMode: true,
-  needsTaxiDec10: true,
-  needsTaxiDec11: true,
-  needsTaxiReturn: true,
+  needsTransportDec9: true,
+  needsTransportDec10: true,
+  needsTransportDec11: true,
+  needsTransportReturn: true,
   flightNumber: true,
   pickupDate: true,
   pickupTime: true,
