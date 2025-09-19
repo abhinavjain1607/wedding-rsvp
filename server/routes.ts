@@ -1,7 +1,7 @@
 import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated, isAdmin } from "./replitAuth";
+import { setupAuth, isAuthenticated, isAdmin } from "./simpleAuth";
 import {
   insertGuestSchema,
   insertGuestStep1Schema,
@@ -18,7 +18,7 @@ import twilio from "twilio";
 
 // Configure multer for file uploads
 // Use /tmp directory in serverless environments (Vercel), local uploads in development
-const uploadDir = process.env.VERCEL 
+const uploadDir = process.env.VERCEL
   ? path.join("/tmp", "uploads")
   : path.join(process.cwd(), "uploads");
 

@@ -1,13 +1,10 @@
 import {
-  users,
   guests,
   admins,
   dashboardContent,
   galleryImages,
   messageTemplates,
   messageLogs,
-  type User,
-  type UpsertUser,
   type Guest,
   type InsertGuest,
   type Admin,
@@ -26,10 +23,6 @@ import { eq, and, ilike, desc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
-  // User operations (required for Replit Auth)
-  getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
-
   // Admin operations
   getAdmin(email: string): Promise<Admin | undefined>;
   createAdmin(admin: InsertAdmin): Promise<Admin>;
@@ -87,27 +80,6 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // User operations
-  async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
-  }
-
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
-  }
-
   // Admin operations
   async getAdmin(email: string): Promise<Admin | undefined> {
     const [admin] = await db
