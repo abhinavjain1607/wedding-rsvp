@@ -17,7 +17,11 @@ import { randomUUID } from "crypto";
 import twilio from "twilio";
 
 // Configure multer for file uploads
-const uploadDir = path.join(process.cwd(), "uploads");
+// Use /tmp directory in serverless environments (Vercel), local uploads in development
+const uploadDir = process.env.VERCEL 
+  ? path.join("/tmp", "uploads")
+  : path.join(process.cwd(), "uploads");
+
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
