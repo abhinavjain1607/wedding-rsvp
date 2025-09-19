@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { serveStatic } from "./vite";
+import { serveStatic } from "./static";
 
 const app = express();
 app.use(express.json());
@@ -69,11 +69,15 @@ export default async function handler(req: any, res: any) {
     const app = await initializeApp();
     return app(req, res);
   } catch (error) {
-    console.error('Vercel handler error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    res.status(500).json({ 
-      message: 'Server initialization failed',
-      error: process.env.NODE_ENV === 'development' ? errorMessage : 'Internal server error'
+    console.error("Vercel handler error:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({
+      message: "Server initialization failed",
+      error:
+        process.env.NODE_ENV === "development"
+          ? errorMessage
+          : "Internal server error",
     });
   }
 }

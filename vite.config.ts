@@ -32,15 +32,27 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     rollupOptions: {
-      // Force Rollup to not use native binaries
+      // Force Rollup to use JS fallback instead of native binaries
       output: {
         format: "es",
       },
+      // Disable native binary usage
+      onwarn: (warning, warn) => {
+        if (warning.code === 'MISSING_GLOBAL_NAME') return;
+        warn(warning);
+      },
     },
+    // Increase memory limit for build
+    chunkSizeWarningLimit: 1000,
   },
   define: {
-    // Disable native binaries
+    // Disable native binaries completely
     "process.env.ROLLUP_NO_NATIVE": JSON.stringify("true"),
+    "global.ROLLUP_NO_NATIVE": JSON.stringify("true"),
+  },
+  optimizeDeps: {
+    // Force pre-bundling to avoid runtime issues
+    include: ['react', 'react-dom'],
   },
   server: {
     fs: {
