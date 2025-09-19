@@ -143,10 +143,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Debug endpoint for local development
   app.get("/api/debug/user", (req: any, res) => {
     console.log("Debug user endpoint hit");
-    const adminPassword = req.headers['x-admin-password'] as string;
+    const adminPassword = req.headers["x-admin-password"] as string;
     const expectedPassword = process.env.ADMIN_PASSWORD;
     const isAuth = !expectedPassword || adminPassword === expectedPassword;
-    
+
     res.json({
       isAuthenticated: isAuth,
       hasAdminPassword: !!expectedPassword,
@@ -161,11 +161,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         user: {
           sub: "admin",
-          email: "admin@wedding.com", 
+          email: "admin@wedding.com",
           first_name: "Admin",
           last_name: "User",
-          profileImageUrl: null
-        }
+          profileImageUrl: null,
+        },
       });
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -188,31 +188,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lastName: "User",
           profileImageUrl: "",
         };
-        return res.json({ 
-          message: "Login successful (no password configured)", 
+        return res.json({
+          message: "Login successful (no password configured)",
           user: userData,
-          success: true 
+          success: true,
         });
       }
 
       if (password === expectedPassword) {
         const userData = {
           id: "admin",
-          email: email || "admin@wedding.com", 
+          email: email || "admin@wedding.com",
           firstName: "Admin",
           lastName: "User",
           profileImageUrl: "",
         };
-        return res.json({ 
-          message: "Login successful", 
+        return res.json({
+          message: "Login successful",
           user: userData,
-          success: true 
+          success: true,
         });
       }
 
-      return res.status(401).json({ 
-        success: false, 
-        message: "Invalid password" 
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
       });
     } catch (error) {
       console.error("Local login error:", error);
@@ -463,6 +463,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
     express.static(uploadDir)
   );
+
+  // Serve static images from client/public directory (for development)
+  if (process.env.NODE_ENV === "development") {
+    const publicImagesPath = path.join(process.cwd(), "client", "public");
+    app.use("/images", express.static(path.join(publicImagesPath, "images")));
+    console.log(`🖼️  Serving static images from: ${path.join(publicImagesPath, "images")}`);
+  }
 
   // Admin routes
   app.get("/api/admin/guests", isAuthenticated, isAdmin, async (req, res) => {
