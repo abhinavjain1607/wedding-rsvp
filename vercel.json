@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "npm install --include=dev --registry=https://registry.npmjs.org/ --no-audit --no-fund",
+  "installCommand": "rm -rf node_modules package-lock.json && npm install --include=dev --registry=https://registry.npmjs.org/ --no-audit --no-fund",
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
   "rewrites": [
