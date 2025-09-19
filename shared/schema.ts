@@ -47,15 +47,47 @@ export const admins = pgTable("admins", {
 // Guests table for RSVP management
 export const guests = pgTable("guests", {
   id: uuid("id").defaultRandom().primaryKey(),
+  // Step 1 fields
   firstName: varchar("first_name").notNull(),
   lastName: varchar("last_name").notNull(),
+  email: varchar("email").notNull(),
+  phone: varchar("phone"),
   phoneWhatsapp: varchar("phone_whatsapp"),
-  phoneSms: varchar("phone_sms"),
-  guestCount: integer("guest_count").notNull(),
-  requiresAccommodation: boolean("requires_accommodation").default(false),
-  transportMode: varchar("transport_mode"),
+  rsvpStatus: varchar("rsvp_status").default("pending"), // pending, attending, declined, tentative
+  step1Completed: boolean("step1_completed").default(false),
+
+  // Step 2 fields (optional, can be completed later)
+  step2Completed: boolean("step2_completed").default(false),
+
+  // ID Document upload (valid IDs: aadhar, pan, passport, voter id, drivers license)
+  idDocumentType: varchar("id_document_type"), // aadhar, pan, passport, voter_id, drivers_license
   idUploadUrl: text("id_upload_url"),
-  rsvpStatus: varchar("rsvp_status").default("pending"),
+
+  // Transport details
+  transportMode: varchar("transport_mode"), // flight, train, driving, bus, other
+
+  // Taxi service requirements
+  needsTaxiDec10: boolean("needs_taxi_dec10").default(false),
+  needsTaxiDec11: boolean("needs_taxi_dec11").default(false),
+  needsTaxiReturn: boolean("needs_taxi_return").default(false),
+
+  // Flight and timing details
+  flightNumber: varchar("flight_number"),
+  pickupDate: varchar("pickup_date"), // Dec 10 or Dec 11
+  pickupTime: varchar("pickup_time"), // 6am to 12pm options
+  dropoffDate: varchar("dropoff_date"), // till Dec 12
+  dropoffTime: varchar("dropoff_time"), // till 12pm
+
+  // Additional information
+  additionalNotes: text("additional_notes"),
+
+  // Legacy fields (keeping for backward compatibility)
+  guestCount: integer("guest_count").default(1),
+  requiresAccommodation: boolean("requires_accommodation").default(false),
+  phoneSms: varchar("phone_sms"),
+  pickupDateTime: timestamp("pickup_datetime"),
+  dropoffDateTime: timestamp("dropoff_datetime"),
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -119,6 +151,47 @@ export const insertGuestSchema = createInsertSchema(guests).omit({
   updatedAt: true,
 });
 
+// Step 1 specific schema
+export const step1Schema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Valid email is required"),
+  phone: z.string().optional(),
+  phoneWhatsapp: z.string().optional(),
+  rsvpStatus: z.enum(["attending", "declined", "tentative"]),
+});
+
+export const insertGuestStep1Schema = createInsertSchema(guests).pick({
+  firstName: true,
+  lastName: true,
+  email: true,
+  phone: true,
+  phoneWhatsapp: true,
+  rsvpStatus: true,
+});
+
+// Step 2 specific schema
+export const insertGuestStep2Schema = createInsertSchema(guests).pick({
+  idDocumentType: true,
+  idUploadUrl: true,
+  transportMode: true,
+  needsTaxiDec10: true,
+  needsTaxiDec11: true,
+  needsTaxiReturn: true,
+  flightNumber: true,
+  pickupDate: true,
+  pickupTime: true,
+  dropoffDate: true,
+  dropoffTime: true,
+  additionalNotes: true,
+});
+
+// Update/find guest schema
+export const findGuestSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  email: z.string().email("Valid email is required"),
+});
+
 export const insertAdminSchema = createInsertSchema(admins).omit({
   createdAt: true,
 });
@@ -153,6 +226,9 @@ export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Guest = typeof guests.$inferSelect;
 export type InsertGuest = z.infer<typeof insertGuestSchema>;
+export type InsertGuestStep1 = z.infer<typeof insertGuestStep1Schema>;
+export type InsertGuestStep2 = z.infer<typeof insertGuestStep2Schema>;
+export type FindGuest = z.infer<typeof findGuestSchema>;
 export type Admin = typeof admins.$inferSelect;
 export type InsertAdmin = z.infer<typeof insertAdminSchema>;
 export type DashboardContent = typeof dashboardContent.$inferSelect;

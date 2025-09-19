@@ -22,20 +22,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import MessageModal from "@/components/message-modal";
-import { Search, MessageSquare, Users } from "lucide-react";
-
-interface Guest {
-  id: string;
-  firstName: string;
-  lastName: string;
-  phoneWhatsapp?: string | null;
-  phoneSms?: string | null;
-  guestCount: number;
-  requiresAccommodation: boolean | null;
-  transportMode?: string | null;
-  rsvpStatus: string | null;
-  createdAt: string | Date | null;
-}
+import GuestDetailsModal from "@/components/guest-details-modal";
+import {
+  Search,
+  MessageSquare,
+  Users,
+  Eye,
+  CheckCircle,
+  XCircle,
+  Clock,
+} from "lucide-react";
+import type { Guest } from "@shared/schema";
 
 interface GuestTableProps {
   guests: Guest[];
@@ -48,6 +45,9 @@ export default function GuestTable({ guests }: GuestTableProps) {
   const [messageModalOpen, setMessageModalOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
   const [bulkMessageMode, setBulkMessageMode] = useState(false);
+  const [selectedGuestForDetails, setSelectedGuestForDetails] =
+    useState<Guest | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -100,17 +100,74 @@ export default function GuestTable({ guests }: GuestTableProps) {
     setMessageModalOpen(true);
   };
 
+  const openGuestDetails = (guest: Guest) => {
+    setSelectedGuestForDetails(guest);
+    setDetailsModalOpen(true);
+  };
+
+  const closeGuestDetails = () => {
+    setSelectedGuestForDetails(null);
+    setDetailsModalOpen(false);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "attending":
         return (
-          <Badge className="bg-secondary/10 text-secondary">Attending</Badge>
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Attending
+          </Badge>
         );
       case "declined":
-        return <Badge variant="destructive">Declined</Badge>;
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-200">
+            <XCircle className="w-3 h-3 mr-1" />
+            Declined
+          </Badge>
+        );
+      case "tentative":
+        return (
+          <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+            <Clock className="w-3 h-3 mr-1" />
+            Tentative
+          </Badge>
+        );
       default:
-        return <Badge variant="secondary">Pending</Badge>;
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+            <Clock className="w-3 h-3 mr-1" />
+            Pending
+          </Badge>
+        );
     }
+  };
+
+  const getCompletionBadge = (guest: Guest) => {
+    if (!guest.step1Completed) {
+      return (
+        <Badge variant="outline" className="text-xs">
+          Incomplete
+        </Badge>
+      );
+    }
+
+    if (guest.rsvpStatus === "attending" && !guest.step2Completed) {
+      return (
+        <Badge
+          variant="outline"
+          className="text-xs border-yellow-300 text-yellow-700"
+        >
+          Step 2 Pending
+        </Badge>
+      );
+    }
+
+    return (
+      <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">
+        Complete
+      </Badge>
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -145,6 +202,7 @@ export default function GuestTable({ guests }: GuestTableProps) {
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="attending">Attending</SelectItem>
+              <SelectItem value="tentative">Tentative</SelectItem>
               <SelectItem value="declined">Declined</SelectItem>
             </SelectContent>
           </Select>
@@ -181,8 +239,8 @@ export default function GuestTable({ guests }: GuestTableProps) {
               </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Contact</TableHead>
-              <TableHead>Guests</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Completion</TableHead>
               <TableHead>Accommodation</TableHead>
               <TableHead>Transport</TableHead>
               <TableHead>Added</TableHead>
@@ -232,14 +290,9 @@ export default function GuestTable({ guests }: GuestTableProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Users className="w-4 h-4 text-muted-foreground" />
-                      {guest.guestCount}
-                    </div>
-                  </TableCell>
-                  <TableCell>
                     {getStatusBadge(guest.rsvpStatus || "pending")}
                   </TableCell>
+                  <TableCell>{getCompletionBadge(guest)}</TableCell>
                   <TableCell>
                     <span
                       className={
@@ -264,15 +317,27 @@ export default function GuestTable({ guests }: GuestTableProps) {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleSendMessage(guest)}
-                      disabled={!guest.phoneWhatsapp}
-                      data-testid={`button-message-${guest.id}`}
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openGuestDetails(guest)}
+                        data-testid={`button-details-${guest.id}`}
+                        title="View Details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSendMessage(guest)}
+                        disabled={!guest.phoneWhatsapp}
+                        data-testid={`button-message-${guest.id}`}
+                        title="Send Message"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -294,6 +359,13 @@ export default function GuestTable({ guests }: GuestTableProps) {
             queryKey: ["/api/admin/message-logs"],
           });
         }}
+      />
+
+      {/* Guest Details Modal */}
+      <GuestDetailsModal
+        guest={selectedGuestForDetails}
+        open={detailsModalOpen}
+        onClose={closeGuestDetails}
       />
     </div>
   );

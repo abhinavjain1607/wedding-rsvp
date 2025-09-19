@@ -4,6 +4,9 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin } from "./replitAuth";
 import {
   insertGuestSchema,
+  insertGuestStep1Schema,
+  insertGuestStep2Schema,
+  findGuestSchema,
   insertDashboardContentSchema,
   insertGalleryImageSchema,
 } from "@shared/schema";
@@ -270,7 +273,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Guest RSVP routes
+  // Guest RSVP routes - Step 1 (Basic Info)
+  app.post("/api/guests/step1", async (req, res) => {
+    try {
+      const guestData = insertGuestStep1Schema.parse(req.body);
+      const guest = await storage.createGuest({
+        ...guestData,
+        step1Completed: true,
+      });
+      res.status(201).json(guest);
+    } catch (error) {
+      console.error("Error creating guest step 1:", error);
+      res.status(400).json({ message: "Failed to create guest RSVP step 1" });
+    }
+  });
+
+  // Update guest step 1
+  app.put("/api/guests/:id/step1", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const guestData = insertGuestStep1Schema.partial().parse(req.body);
+      const guest = await storage.updateGuest(id, {
+        ...guestData,
+        step1Completed: true,
+      });
+      res.json(guest);
+    } catch (error) {
+      console.error("Error updating guest step 1:", error);
+      res.status(400).json({ message: "Failed to update guest step 1" });
+    }
+  });
+
+  // Guest RSVP routes - Step 2 (Detailed Info)
+  app.put(
+    "/api/guests/:id/step2",
+    upload.single("idDocument"),
+    async (req, res) => {
+      try {
+        const { id } = req.params;
+        const guestData = insertGuestStep2Schema.partial().parse(req.body);
+
+        // Handle file upload if present
+        if (req.file) {
+          const fileUrl = `/uploads/${req.file.filename}`;
+          guestData.idUploadUrl = fileUrl;
+        }
+
+        const guest = await storage.updateGuest(id, {
+          ...guestData,
+          step2Completed: true,
+        });
+        res.json(guest);
+      } catch (error) {
+        console.error("Error updating guest step 2:", error);
+        res.status(400).json({ message: "Failed to update guest step 2" });
+      }
+    }
+  );
+
+  // Find guest by first name and email (for updates)
+  app.post("/api/guests/find-by-email", async (req, res) => {
+    try {
+      const { firstName, email } = findGuestSchema.parse(req.body);
+      const guest = await storage.getGuestByFirstNameAndEmail(firstName, email);
+      if (!guest) {
+        return res.status(404).json({ message: "Guest not found" });
+      }
+      res.json(guest);
+    } catch (error) {
+      console.error("Error finding guest by email:", error);
+      res.status(400).json({ message: "Failed to find guest" });
+    }
+  });
+
+  // Legacy routes (keeping for backward compatibility)
   app.post("/api/guests", upload.single("idDocument"), async (req, res) => {
     try {
       const guestData = insertGuestSchema.parse(req.body);
