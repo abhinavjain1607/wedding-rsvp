@@ -41,6 +41,7 @@ export interface IStorage {
     firstName: string,
     lastName: string
   ): Promise<Guest | undefined>;
+  getGuestByEmail(email: string): Promise<Guest | undefined>;
   getGuestByFirstNameAndEmail(
     firstName: string,
     email: string
@@ -155,6 +156,14 @@ export class DatabaseStorage implements IStorage {
           ilike(guests.lastName, lastName)
         )
       );
+    return guest;
+  }
+
+  async getGuestByEmail(email: string): Promise<Guest | undefined> {
+    const [guest] = await db
+      .select()
+      .from(guests)
+      .where(eq(guests.email, email));
     return guest;
   }
 

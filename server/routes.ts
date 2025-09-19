@@ -260,6 +260,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const guestData = insertGuestStep1Schema.parse(req.body);
       console.log("Parsed guest data:", guestData);
 
+      // Check if email already exists
+      const existingGuest = await storage.getGuestByEmail(guestData.email);
+      if (existingGuest) {
+        return res.status(400).json({
+          message:
+            "This email address is already registered. Please use the 'Update Existing RSVP' option to modify your details.",
+        });
+      }
+
       const guest = await storage.createGuest({
         ...guestData,
         step1Completed: true,
@@ -279,6 +288,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const guestData = insertGuestStep1Schema.partial().parse(req.body);
+
+      // Check if email is being updated and if it already exists for another guest
+      if (guestData.email) {
+        const existingGuest = await storage.getGuestByEmail(guestData.email);
+        if (existingGuest && existingGuest.id !== id) {
+          return res.status(400).json({
+            message:
+              "This email address is already registered with another RSVP. Please use a different email or update your existing RSVP.",
+          });
+        }
+      }
+
       const guest = await storage.updateGuest(id, {
         ...guestData,
         step1Completed: true,
@@ -374,6 +395,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const guestData = insertGuestSchema.parse(req.body);
 
+      // Check if email already exists
+      if (guestData.email) {
+        const existingGuest = await storage.getGuestByEmail(guestData.email);
+        if (existingGuest) {
+          return res.status(400).json({
+            message:
+              "This email address is already registered. Please use a different email address.",
+          });
+        }
+      }
+
       // Handle file upload if present
       if (req.file) {
         const fileUrl = `/uploads/${req.file.filename}`;
@@ -406,6 +438,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const guestData = insertGuestSchema.partial().parse(req.body);
+
+      // Check if email is being updated and if it already exists for another guest
+      if (guestData.email) {
+        const existingGuest = await storage.getGuestByEmail(guestData.email);
+        if (existingGuest && existingGuest.id !== id) {
+          return res.status(400).json({
+            message:
+              "This email address is already registered with another RSVP. Please use a different email or update your existing RSVP.",
+          });
+        }
+      }
 
       // Handle file upload if present
       if (req.file) {
