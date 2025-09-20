@@ -52,34 +52,6 @@ interface MessageFormData {
   customPhoneNumber?: string;
 }
 
-const DEFAULT_TEMPLATES = {
-  reminder: {
-    name: "Gentle Reminder to RSVP",
-    content:
-      "Hi {{firstName}}! We hope you're doing well. We're finalizing our wedding plans and would love to know if you'll be able to join us in Udaipur. Please RSVP when you have a moment. Thank you! ❤️ Sneha & Abhinav",
-  },
-  personalizedReminder: {
-    name: "Personalized RSVP Reminder",
-    content:
-      "Dear {{fullName}}, we're excited about our upcoming wedding! We have you down for {{guestCount}} guest(s). {{ifAccommodation}}We've noted you'll need accommodation arrangements.{{/ifAccommodation}} Please confirm your attendance soon. Looking forward to celebrating with you!",
-  },
-  hotel: {
-    name: "Hotel Check-in Information",
-    content:
-      "Hi {{firstName}}! Important hotel check-in information: Please bring a valid photo ID for check-in. Check-in starts at 3:00 PM. {{ifAccommodation}}Your accommodation has been arranged as requested.{{/ifAccommodation}} Looking forward to seeing you! 🏨",
-  },
-  itinerary: {
-    name: "Wedding Itinerary Update",
-    content:
-      "Hi {{firstName}}! Wedding itinerary update: We've shared the detailed schedule for our celebration weekend. {{ifAttending}}Since you're attending, please check your email for the full itinerary.{{/ifAttending}} Can't wait to celebrate with you! 💒",
-  },
-  transport: {
-    name: "Transport Information",
-    content:
-      "Hello {{fullName}}! We're organizing transport details for the wedding. You mentioned {{transportMode}} as your transport mode. {{ifAccommodation}}Since you need accommodation, we'll coordinate pickup from your hotel.{{/ifAccommodation}} Please let us know if anything changes!",
-  },
-};
-
 export default function MessageModal({
   open,
   onClose,
@@ -165,15 +137,15 @@ export default function MessageModal({
 
   useEffect(() => {
     if (selectedTemplate && selectedTemplate !== "custom") {
-      const template =
-        DEFAULT_TEMPLATES[selectedTemplate as keyof typeof DEFAULT_TEMPLATES];
+      // Find template from database templates
+      const template = customTemplates.find((t) => t.id === selectedTemplate);
       if (template) {
         form.setValue("message", template.content);
       }
     } else if (selectedTemplate === "custom") {
       form.setValue("message", "");
     }
-  }, [selectedTemplate, form]);
+  }, [selectedTemplate, form, customTemplates]);
 
   const onSubmit = (data: MessageFormData) => {
     if (!data.message.trim()) {
@@ -295,22 +267,9 @@ export default function MessageModal({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="custom">Custom Message</SelectItem>
-                <SelectItem value="reminder">
-                  Gentle Reminder to RSVP
-                </SelectItem>
-                <SelectItem value="personalizedReminder">
-                  Personalized RSVP Reminder
-                </SelectItem>
-                <SelectItem value="hotel">
-                  Hotel Check-in Information
-                </SelectItem>
-                <SelectItem value="itinerary">
-                  Wedding Itinerary Update
-                </SelectItem>
-                <SelectItem value="transport">Transport Information</SelectItem>
                 {customTemplates.map((template) => (
                   <SelectItem key={template.id} value={template.id}>
-                    {template.name}
+                    {template.subject}
                   </SelectItem>
                 ))}
               </SelectContent>

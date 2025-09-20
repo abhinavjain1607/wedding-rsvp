@@ -100,26 +100,6 @@ function processMessageTemplate(template: string, guest: any): string {
     guest.rsvpStatus || "pending"
   );
 
-  // Replace accommodation status
-  const accommodationText = guest.requiresAccommodation ? "Yes" : "No";
-  processedMessage = processedMessage.replace(
-    /\{\{requiresAccommodation\}\}/g,
-    accommodationText
-  );
-
-  // Replace conditional accommodation text
-  if (guest.requiresAccommodation) {
-    processedMessage = processedMessage.replace(
-      /\{\{ifAccommodation\}\}(.*?)\{\{\/ifAccommodation\}\}/g,
-      "$1"
-    );
-  } else {
-    processedMessage = processedMessage.replace(
-      /\{\{ifAccommodation\}\}(.*?)\{\{\/ifAccommodation\}\}/g,
-      ""
-    );
-  }
-
   // Replace conditional attending text
   if (guest.rsvpStatus === "attending") {
     processedMessage = processedMessage.replace(
@@ -136,9 +116,310 @@ function processMessageTemplate(template: string, guest: any): string {
   return processedMessage;
 }
 
+// Send RSVP notification WhatsApp message
+async function sendRSVPNotification(guest: any, templateName: string) {
+  try {
+    // Check if WhatsApp number is available
+    if (!guest.phoneWhatsapp) {
+      console.log(`No WhatsApp number available for guest ${guest.email}`);
+      return;
+    }
+
+    // Get the message template
+    const template = await storage.getMessageTemplateByName(templateName);
+    if (!template) {
+      console.log(`Template '${templateName}' not found`);
+      return;
+    }
+
+    // Process the template with guest data
+    const personalizedMessage = processMessageTemplate(template.content, guest);
+
+    // Send WhatsApp message
+    const messageResponse = await sendWhatsAppMessage(
+      guest.phoneWhatsapp,
+      personalizedMessage
+    );
+
+    // Log the message
+    await storage.logMessage({
+      guestId: guest.id,
+      phoneNumber: guest.phoneWhatsapp,
+      message: personalizedMessage,
+      status: "sent",
+    });
+
+    console.log(
+      `✅ RSVP notification sent to ${guest.firstName} ${guest.lastName} (${guest.phoneWhatsapp})`
+    );
+    return messageResponse;
+  } catch (error) {
+    console.error(
+      `❌ Failed to send RSVP notification to ${guest.firstName} ${guest.lastName}:`,
+      error
+    );
+
+    // Log failed message attempt
+    if (guest.phoneWhatsapp) {
+      await storage.logMessage({
+        guestId: guest.id,
+        phoneNumber: guest.phoneWhatsapp,
+        message: `Failed to send ${templateName} notification`,
+        status: "failed",
+      });
+    }
+  }
+}
+
+// Initialize default message templates
+async function initializeDefaultTemplates() {
+  try {
+    // Check if templates already exist
+    const step1Template = await storage.getMessageTemplateByName(
+      "rsvp_step1_welcome"
+    );
+    const step2Template = await storage.getMessageTemplateByName(
+      "rsvp_step2_completion"
+    );
+
+    // Create step1 welcome template if it doesn't exist
+    if (!step1Template) {
+      await storage.createMessageTemplate({
+        name: "rsvp_step1_welcome",
+        subject: "RSVP Step 1 Welcome",
+        content: `🎉 Thank you for your RSVP, {{firstName}}!
+
+We're thrilled to confirm that you've successfully registered for our wedding celebration! 
+
+✅ Your RSVP Status: {{rsvpStatus}}
+� Wedding Date: December 11th, 2024
+
+📱 *Important: Save this WhatsApp number!*
+We'll send all wedding updates, including:
+• Transport details & timings
+• Venue information & directions  
+• Schedule updates
+• Last-minute announcements
+
+💬 *Need to make changes or have questions?* 
+Simply reply to this message - we're here to help!
+
+🙏 Thank you for being part of our special day. We can't wait to celebrate with you!
+
+With love & excitement,
+Abhinav & Sneha 💕
+
+---
+*This is an automated message. Reply anytime for assistance.*`,
+      });
+      console.log("✅ Created default RSVP step1 welcome template");
+    } else {
+      // Update existing template with new content
+      await storage.updateMessageTemplate(step1Template.id, {
+        subject: "RSVP Step 1 Welcome",
+        content: `🎉 Thank you for your RSVP, {{firstName}}!
+
+We're thrilled to confirm that you've successfully registered for our wedding celebration! 
+
+✅ Your RSVP Status: {{rsvpStatus}}
+📅 Wedding Date: December 11th, 2024
+
+📱 *Important: Save this WhatsApp number!*
+We'll send all wedding updates, including:
+• Transport details & timings
+• Venue information & directions  
+• Schedule updates
+• Last-minute announcements
+
+💬 *Need to make changes or have questions?* 
+Simply reply to this message - we're here to help!
+
+🙏 Thank you for being part of our special day. We can't wait to celebrate with you!
+
+With love & excitement,
+Abhinav & Sneha 💕
+
+---
+*This is an automated message. Reply anytime for assistance.*`,
+      });
+      console.log("✅ Updated RSVP step1 welcome template");
+    }
+
+    // Create step2 completion template if it doesn't exist
+    if (!step2Template) {
+      await storage.createMessageTemplate({
+        name: "rsvp_step2_completion",
+        subject: "RSVP Step 2 Complete",
+        content: `🎊 Perfect! Your RSVP is now complete, {{firstName}}!
+
+Thank you for providing all your details. Here's what we have on file:
+
+📋 *Your Information:*
+• Name: {{fullName}}
+• RSVP Status: {{rsvpStatus}}
+• Transport: {{transportMode}}
+
+📅 *Wedding Date: December 11th, 2024*
+
+✅ *You're all set!* No further action needed.
+
+📱 *Stay Connected:*
+We'll send important updates via WhatsApp including:
+• Detailed schedule & timings
+• Venue directions & parking info
+• Weather updates & dress code reminders
+• Day-of coordination messages
+
+💬 *Questions or need to update something?*
+Just reply to this message - we'll respond quickly!
+
+🎉 We're so excited to celebrate with you soon!
+
+Warmest regards,
+Abhinav & Sneha 💕
+
+---
+*This number will be your direct line for all wedding-related updates and questions.*`,
+      });
+      console.log("✅ Created default RSVP step2 completion template");
+    } else {
+      // Update existing template with new content
+      await storage.updateMessageTemplate(step2Template.id, {
+        subject: "RSVP Step 2 Complete",
+        content: `🎊 Perfect! Your RSVP is now complete, {{firstName}}!
+
+Thank you for providing all your details. Here's what we have on file:
+
+📋 *Your Information:*
+• Name: {{fullName}}
+• RSVP Status: {{rsvpStatus}}
+• Transport: {{transportMode}}
+
+📅 *Wedding Date: December 11th, 2024*
+
+✅ *You're all set!* No further action needed.
+
+📱 *Stay Connected:*
+We'll send important updates via WhatsApp including:
+• Detailed schedule & timings
+• Venue directions & parking info
+• Weather updates & dress code reminders
+• Day-of coordination messages
+
+💬 *Questions or need to update something?*
+Just reply to this message - we'll respond quickly!
+
+🎉 We're so excited to celebrate with you soon!
+
+Warmest regards,
+Abhinav & Sneha 💕
+
+---
+*This number will be your direct line for all wedding-related updates and questions.*`,
+      });
+      console.log("✅ Updated RSVP step2 completion template");
+    }
+
+    // Initialize additional templates used in the dropdown
+    const additionalTemplates = [
+      {
+        name: "default_message",
+        subject: "Default Message",
+        content: `Hi {{firstName}}! 👋
+
+Hope you're doing well! We wanted to reach out with an update about our wedding on December 11th, 2024.
+
+[Your message content here]
+
+If you have any questions or need assistance, just reply to this message!
+
+Looking forward to celebrating with you! 🎉
+
+With love,
+Abhinav & Sneha 💕`,
+      },
+      {
+        name: "custom_message",
+        subject: "Custom Message",
+        content: `Hi {{firstName}}! 👋
+
+This is a custom message for you.
+
+[Add your custom content here]
+
+Best regards,
+Abhinav & Sneha 💕`,
+      },
+      {
+        name: "gentle_reminder_rsvp",
+        subject: "Gentle Reminder to RSVP",
+        content: `Hi {{firstName}}! 🌟
+
+We hope you're doing well! This is a gentle reminder that we haven't received your RSVP yet for our wedding on December 11th, 2024.
+
+💌 We'd love to celebrate with you and need to finalize our guest count soon.
+
+Please take a moment to complete your RSVP when convenient:
+[RSVP Link]
+
+If you have any questions or need assistance, just reply to this message!
+
+Looking forward to hearing from you! 💕
+
+Abhinav & Sneha`,
+      },
+      {
+        name: "transport_information",
+        subject: "Transport Information",
+        content: `Hi {{firstName}}! 🚗
+
+Here's your transportation information for our wedding:
+
+🚌 *Transport Details:*
+Pickup Date: {{pickupDate}}
+Pickup Time: {{pickupTime}}
+Transport Mode: {{transportMode}}
+
+📍 *Pickup Location:*
+[Pickup address/landmark]
+
+📞 *Driver Contact:*
+[Driver name and phone number]
+
+⏰ *Important Reminders:*
+• Please be ready 15 minutes before pickup time
+• Carry a valid ID for verification
+• Contact us immediately if there are any issues
+
+Safe travels! See you at the celebration! 🎉
+
+Abhinav & Sneha`,
+      },
+    ];
+
+    // Create additional templates if they don't exist
+    for (const templateData of additionalTemplates) {
+      const existingTemplate = await storage.getMessageTemplateByName(
+        templateData.name
+      );
+      if (!existingTemplate) {
+        await storage.createMessageTemplate(templateData);
+        console.log(`✅ Created ${templateData.subject} template`);
+      }
+    }
+
+    console.log("📱 WhatsApp notification templates initialized");
+  } catch (error) {
+    console.error("❌ Error initializing default templates:", error);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
+
+  // Initialize default WhatsApp message templates
+  await initializeDefaultTemplates();
 
   // Debug endpoint for local development
   app.get("/api/debug/user", (req: any, res) => {
@@ -276,6 +557,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Created guest:", guest);
 
+      // Send RSVP registration WhatsApp notification
+      await sendRSVPNotification(guest, "rsvp_step1_welcome");
+
       res.status(201).json(guest);
     } catch (error) {
       console.error("Error creating guest step 1:", error);
@@ -326,6 +610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const processedBody = { ...req.body };
 
         // Handle boolean fields that come as strings from FormData
+        // Legacy taxi field names (for backward compatibility)
         if (processedBody.needsTaxiDec10 !== undefined) {
           processedBody.needsTaxiDec10 =
             processedBody.needsTaxiDec10 === "true";
@@ -337,6 +622,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (processedBody.needsTaxiReturn !== undefined) {
           processedBody.needsTaxiReturn =
             processedBody.needsTaxiReturn === "true";
+        }
+
+        // New transport field names
+        if (processedBody.needsTransportDec9 !== undefined) {
+          processedBody.needsTransportDec9 =
+            processedBody.needsTransportDec9 === "true";
+        }
+        if (processedBody.needsTransportDec10 !== undefined) {
+          processedBody.needsTransportDec10 =
+            processedBody.needsTransportDec10 === "true";
+        }
+        if (processedBody.needsTransportDec11 !== undefined) {
+          processedBody.needsTransportDec11 =
+            processedBody.needsTransportDec11 === "true";
+        }
+        if (processedBody.needsTransportReturn !== undefined) {
+          processedBody.needsTransportReturn =
+            processedBody.needsTransportReturn === "true";
         }
 
         // Handle empty strings as null for optional text fields
@@ -367,6 +670,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ...guestData,
           step2Completed: true,
         });
+
+        // Send RSVP completion WhatsApp notification
+        await sendRSVPNotification(guest, "rsvp_step2_completion");
+
         res.json(guest);
       } catch (error) {
         console.error("Error updating guest step 2:", error);
@@ -537,6 +844,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ message: "Failed to create guest" });
     }
   });
+
+  app.delete(
+    "/api/admin/guests/:id",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const { id } = req.params;
+
+        // Check if guest exists first
+        const guest = await storage.getGuest(id);
+        if (!guest) {
+          return res.status(404).json({ message: "Guest not found" });
+        }
+
+        await storage.deleteGuest(id);
+        res.status(200).json({ message: "Guest deleted successfully" });
+      } catch (error) {
+        console.error("Error deleting guest:", error);
+        res.status(500).json({ message: "Failed to delete guest" });
+      }
+    }
+  );
 
   app.get("/api/admin/stats", isAuthenticated, isAdmin, async (req, res) => {
     try {

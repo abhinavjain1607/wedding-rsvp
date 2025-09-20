@@ -21,6 +21,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import MessageModal from "@/components/message-modal";
 import GuestDetailsModal from "@/components/guest-details-modal";
 import {
@@ -31,6 +41,7 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  Trash2,
 } from "lucide-react";
 import type { Guest } from "@shared/schema";
 
@@ -48,8 +59,42 @@ export default function GuestTable({ guests }: GuestTableProps) {
   const [selectedGuestForDetails, setSelectedGuestForDetails] =
     useState<Guest | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [guestToDelete, setGuestToDelete] = useState<Guest | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Delete guest mutation
+  const deleteGuestMutation = useMutation({
+    mutationFn: async (guestId: string) => {
+      const response = await apiRequest(
+        "DELETE",
+        `/api/admin/guests/${guestId}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to delete guest");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["guests"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+      toast({
+        title: "Success",
+        description: "Guest deleted successfully",
+      });
+      setDeleteConfirmOpen(false);
+      setGuestToDelete(null);
+    },
+    onError: (error) => {
+      console.error("Delete error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete guest. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Filter guests based on search and status
   const filteredGuests = guests.filter((guest) => {
@@ -108,6 +153,17 @@ export default function GuestTable({ guests }: GuestTableProps) {
   const closeGuestDetails = () => {
     setSelectedGuestForDetails(null);
     setDetailsModalOpen(false);
+  };
+
+  const handleDeleteGuest = (guest: Guest) => {
+    setGuestToDelete(guest);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteGuest = () => {
+    if (guestToDelete) {
+      deleteGuestMutation.mutate(guestToDelete.id);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -368,6 +424,16 @@ export default function GuestTable({ guests }: GuestTableProps) {
                       >
                         <MessageSquare className="w-4 h-4" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteGuest(guest)}
+                        data-testid={`button-delete-${guest.id}`}
+                        title="Delete Guest"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -397,7 +463,35 @@ export default function GuestTable({ guests }: GuestTableProps) {
         guest={selectedGuestForDetails}
         open={detailsModalOpen}
         onClose={closeGuestDetails}
+        onDelete={handleDeleteGuest}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Guest</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{" "}
+              <strong>
+                {guestToDelete?.firstName} {guestToDelete?.lastName}
+              </strong>
+              ? This action cannot be undone and will permanently remove all of
+              their RSVP information.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteGuest}
+              disabled={deleteGuestMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteGuestMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

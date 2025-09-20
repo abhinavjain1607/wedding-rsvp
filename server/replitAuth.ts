@@ -64,13 +64,21 @@ function updateUserSession(
 }
 
 async function upsertUser(claims: any) {
-  await storage.upsertUser({
-    id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
-  });
+  // Map replit claims to admin fields
+  const fullName = `${claims["first_name"] || ""} ${
+    claims["last_name"] || ""
+  }`.trim();
+
+  try {
+    await storage.createAdmin({
+      email: claims["email"],
+      name: fullName || claims["email"], // Use full name or fall back to email
+      passwordHash: "", // No password needed for OAuth users
+    });
+  } catch (error) {
+    // Admin might already exist, which is fine for upsert behavior
+    console.log("Admin already exists or error creating:", error);
+  }
 }
 
 export async function setupAuth(app: Express) {

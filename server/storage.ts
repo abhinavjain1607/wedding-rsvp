@@ -48,6 +48,7 @@ export interface IStorage {
   ): Promise<Guest | undefined>;
   createGuest(guest: InsertGuest): Promise<Guest>;
   updateGuest(id: string, guest: Partial<InsertGuest>): Promise<Guest>;
+  deleteGuest(id: string): Promise<void>;
   getAllGuests(): Promise<Guest[]>;
   getGuestStats(): Promise<{
     totalResponded: number;
@@ -73,8 +74,13 @@ export interface IStorage {
 
   // Message operations
   getAllMessageTemplates(): Promise<MessageTemplate[]>;
+  getMessageTemplateByName(name: string): Promise<MessageTemplate | null>;
   createMessageTemplate(
     template: InsertMessageTemplate
+  ): Promise<MessageTemplate>;
+  updateMessageTemplate(
+    id: string,
+    template: Partial<InsertMessageTemplate>
   ): Promise<MessageTemplate>;
   logMessage(log: InsertMessageLog): Promise<MessageLog>;
   getMessageLogs(guestId?: string): Promise<MessageLog[]>;
@@ -197,6 +203,14 @@ export class DatabaseStorage implements IStorage {
     return updatedGuest;
   }
 
+  async deleteGuest(id: string): Promise<void> {
+    // First delete all related message logs to avoid foreign key constraint violation
+    await db.delete(messageLogs).where(eq(messageLogs.guestId, id));
+
+    // Then delete the guest
+    await db.delete(guests).where(eq(guests.id, id));
+  }
+
   async getAllGuests(): Promise<Guest[]> {
     return await db.select().from(guests).orderBy(desc(guests.createdAt));
   }
@@ -293,6 +307,17 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(messageTemplates);
   }
 
+  async getMessageTemplateByName(
+    name: string
+  ): Promise<MessageTemplate | null> {
+    const templates = await db
+      .select()
+      .from(messageTemplates)
+      .where(eq(messageTemplates.name, name))
+      .limit(1);
+    return templates[0] || null;
+  }
+
   async createMessageTemplate(
     template: InsertMessageTemplate
   ): Promise<MessageTemplate> {
@@ -301,6 +326,18 @@ export class DatabaseStorage implements IStorage {
       .values(template)
       .returning();
     return newTemplate;
+  }
+
+  async updateMessageTemplate(
+    id: string,
+    template: Partial<InsertMessageTemplate>
+  ): Promise<MessageTemplate> {
+    const [updatedTemplate] = await db
+      .update(messageTemplates)
+      .set(template)
+      .where(eq(messageTemplates.id, id))
+      .returning();
+    return updatedTemplate;
   }
 
   async logMessage(log: InsertMessageLog): Promise<MessageLog> {

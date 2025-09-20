@@ -69,7 +69,11 @@ export default function AdminDashboard() {
     step1Completed: guests.filter((g) => g.step1Completed).length,
     step2Completed: guests.filter((g) => g.step2Completed).length,
     needsTaxi: guests.filter(
-      (g) => g.needsTaxiDec10 || g.needsTaxiDec11 || g.needsTaxiReturn
+      (g) =>
+        g.needsTransportDec9 ||
+        g.needsTransportDec10 ||
+        g.needsTransportDec11 ||
+        g.needsTransportReturn
     ).length,
     hasFlightInfo: guests.filter(
       (g) => g.flightNumber && g.flightNumber.trim() !== ""

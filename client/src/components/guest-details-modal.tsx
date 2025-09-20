@@ -23,6 +23,7 @@ import {
   XCircle,
   AlertCircle,
   Download,
+  Trash2,
 } from "lucide-react";
 import type { Guest } from "@shared/schema";
 
@@ -30,12 +31,14 @@ interface GuestDetailsModalProps {
   guest: Guest | null;
   open: boolean;
   onClose: () => void;
+  onDelete?: (guest: Guest) => void;
 }
 
 export default function GuestDetailsModal({
   guest,
   open,
   onClose,
+  onDelete,
 }: GuestDetailsModalProps) {
   if (!guest) return null;
 
@@ -373,10 +376,10 @@ export default function GuestDetailsModal({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div
                   className={`flex items-center gap-3 p-3 rounded-lg ${
-                    guest.needsTaxiDec10 ? "bg-green-50" : "bg-gray-50"
+                    guest.needsTransportDec10 ? "bg-green-50" : "bg-gray-50"
                   }`}
                 >
-                  {guest.needsTaxiDec10 ? (
+                  {guest.needsTransportDec10 ? (
                     <CheckCircle className="w-5 h-5 text-green-600" />
                   ) : (
                     <XCircle className="w-5 h-5 text-gray-400" />
@@ -384,17 +387,17 @@ export default function GuestDetailsModal({
                   <div>
                     <p className="text-sm font-medium">December 10th Pickup</p>
                     <p className="text-sm text-muted-foreground">
-                      {guest.needsTaxiDec10 ? "Required" : "Not needed"}
+                      {guest.needsTransportDec10 ? "Required" : "Not needed"}
                     </p>
                   </div>
                 </div>
 
                 <div
                   className={`flex items-center gap-3 p-3 rounded-lg ${
-                    guest.needsTaxiDec11 ? "bg-green-50" : "bg-gray-50"
+                    guest.needsTransportDec11 ? "bg-green-50" : "bg-gray-50"
                   }`}
                 >
-                  {guest.needsTaxiDec11 ? (
+                  {guest.needsTransportDec11 ? (
                     <CheckCircle className="w-5 h-5 text-green-600" />
                   ) : (
                     <XCircle className="w-5 h-5 text-gray-400" />
@@ -402,17 +405,17 @@ export default function GuestDetailsModal({
                   <div>
                     <p className="text-sm font-medium">December 11th Pickup</p>
                     <p className="text-sm text-muted-foreground">
-                      {guest.needsTaxiDec11 ? "Required" : "Not needed"}
+                      {guest.needsTransportDec11 ? "Required" : "Not needed"}
                     </p>
                   </div>
                 </div>
 
                 <div
                   className={`flex items-center gap-3 p-3 rounded-lg ${
-                    guest.needsTaxiReturn ? "bg-blue-50" : "bg-gray-50"
+                    guest.needsTransportReturn ? "bg-blue-50" : "bg-gray-50"
                   }`}
                 >
-                  {guest.needsTaxiReturn ? (
+                  {guest.needsTransportReturn ? (
                     <Car className="w-5 h-5 text-blue-600" />
                   ) : (
                     <XCircle className="w-5 h-5 text-gray-400" />
@@ -420,7 +423,7 @@ export default function GuestDetailsModal({
                   <div>
                     <p className="text-sm font-medium">Return Taxi</p>
                     <p className="text-sm text-muted-foreground">
-                      {guest.needsTaxiReturn ? "Required" : "Not needed"}
+                      {guest.needsTransportReturn ? "Required" : "Not needed"}
                     </p>
                   </div>
                 </div>
@@ -516,10 +519,26 @@ export default function GuestDetailsModal({
           </Card>
         </div>
 
-        <div className="flex justify-end pt-4 border-t">
-          <Button onClick={onClose} variant="outline">
-            Close
-          </Button>
+        <div className="flex justify-between pt-4 border-t">
+          {onDelete && (
+            <Button
+              onClick={() => {
+                onDelete(guest);
+                onClose();
+              }}
+              variant="destructive"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Guest
+            </Button>
+          )}
+          <div className="flex gap-2 ml-auto">
+            <Button onClick={onClose} variant="outline">
+              Close
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
