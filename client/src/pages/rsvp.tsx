@@ -365,7 +365,7 @@ export default function RSVP() {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-12 flex items-center justify-center">
+        <div className="bg-gradient-to-br from-pink-50 to-purple-50 py-12 flex items-center justify-center min-h-[calc(100vh-4rem)]">
           <Card className="w-full max-w-md mx-4 border-0 shadow-xl">
             <CardContent className="pt-6 text-center">
               <Heart className="w-16 h-16 text-pink-500 mx-auto mb-4 fill-current" />
@@ -395,7 +395,7 @@ export default function RSVP() {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-12">
+        <div className="bg-gradient-to-br from-pink-50 to-purple-50 py-12 min-h-[calc(100vh-4rem)]">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h1 className="font-serif text-4xl sm:text-5xl font-bold text-foreground mb-4">
@@ -453,7 +453,7 @@ export default function RSVP() {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-12">
+        <div className="bg-gradient-to-br from-pink-50 to-purple-50 py-12 min-h-[calc(100vh-4rem)]">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
               <Button
@@ -530,7 +530,7 @@ export default function RSVP() {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-12">
+        <div className="bg-gradient-to-br from-pink-50 to-purple-50 py-12 min-h-[calc(100vh-4rem)]">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
               <Button
@@ -738,7 +738,7 @@ export default function RSVP() {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-12">
+        <div className="bg-gradient-to-br from-pink-50 to-purple-50 py-12 min-h-[calc(100vh-4rem)]">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
               <div className="flex items-center justify-center mb-4">

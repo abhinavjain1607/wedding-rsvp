@@ -23,6 +23,10 @@ interface DashboardContent {
 }
 
 export default function Home() {
+  // Check for family-friendly version query parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const isFamilyVersion = urlParams.get("t") === "fm";
+
   const { data: content = [] } = useQuery<DashboardContent[]>({
     queryKey: ["/api/dashboard-content"],
   });
@@ -30,6 +34,25 @@ export default function Home() {
   const { data: qrCode } = useQuery({
     queryKey: ["/api/qr-code"],
   });
+
+  // Family-friendly photo collection
+  const familyPhotos = [
+    {
+      src: "/images/story/couple-story.jpg",
+      alt: "Sneha & Abhinav - A beautiful love story",
+      caption: "A wonderful couple ready for their next adventure",
+    },
+    {
+      src: "/images/gallery/gallery-1.jpg",
+      alt: "Adventure and travel memories",
+      caption: "Making beautiful memories together",
+    },
+    {
+      src: "/images/gallery/gallery-3.jpg",
+      alt: "Proposal moment",
+      caption: "A special moment at Moraine Lake",
+    },
+  ];
 
   // Photo collections for story carousels
   const vancouverPhotos = [
@@ -96,13 +119,23 @@ export default function Home() {
       {/* Hero Section */}
       <section
         id="home"
-        className="hero-gradient min-h-screen flex items-center justify-center relative overflow-hidden"
+        className="hero-gradient h-screen flex items-center justify-center relative overflow-hidden"
       >
         <div className="absolute inset-0 z-0">
+          {/* Desktop/Tablet image - centered */}
           <img
             src="/images/hero/wedding-couple.jpg"
             alt="Elegant wedding couple portrait"
-            className="w-full h-full object-cover opacity-30"
+            className="hidden sm:block w-full h-full object-cover object-center opacity-30"
+          />
+          {/* Mobile image - positioned to show both people, especially Sneha on the right */}
+          <img
+            src="/images/hero/wedding-couple.jpg"
+            alt="Elegant wedding couple portrait"
+            className="block sm:hidden w-full h-full object-cover opacity-40"
+            style={{
+              objectPosition: "60% center",
+            }}
           />
         </div>
         <div
@@ -115,14 +148,14 @@ export default function Home() {
           <p className="text-xl sm:text-2xl text-muted-foreground mb-8 font-light">
             December 10-11, 2024
           </p>
-          <p className="text-lg sm:text-xl text-muted-foreground mb-12">
+          <p className="text-lg sm:text-xl text-muted-foreground mb-8">
             Shakti Vilas, Debari, Udaipur
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <Link href="/rsvp">
               <Button
                 size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 w-48"
                 data-testid="button-rsvp"
               >
                 RSVP Now
@@ -131,6 +164,7 @@ export default function Home() {
             <Button
               variant="outline"
               size="lg"
+              className="w-48"
               onClick={() =>
                 document
                   .getElementById("details")
@@ -159,169 +193,221 @@ export default function Home() {
             </h2>
             <div className="w-24 h-1 bg-primary mx-auto rounded-full"></div>
             <p className="text-muted-foreground mt-4 text-lg">
-              Our journey from Vancouver to forever
+              {isFamilyVersion
+                ? "A beautiful love story"
+                : "Our journey from Vancouver to forever"}
             </p>
           </div>
 
-          {/* Story Timeline with Zig-Zag Layout */}
-          <div className="relative">
-            {/* Elegant Timeline Connector */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 top-16 bottom-16 w-px bg-gradient-to-b from-primary/20 via-primary/40 to-primary/20 hidden lg:block">
-              {/* Chapter connection dots */}
-              <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-primary/50 rounded-full border-2 border-background shadow-lg"></div>
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-primary/50 rounded-full border-2 border-background shadow-lg"></div>
-              <div className="absolute top-3/4 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-primary/50 rounded-full border-2 border-background shadow-lg"></div>
-            </div>
-
-            {/* Branch connectors for each section */}
-            <div className="absolute left-1/2 top-1/4 transform -translate-x-1/2 -translate-y-1/2 w-16 h-px bg-gradient-to-r from-primary/40 to-transparent hidden lg:block"></div>
-            <div className="absolute right-1/2 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-16 h-px bg-gradient-to-l from-primary/40 to-transparent hidden lg:block"></div>
-            <div className="absolute left-1/2 top-3/4 transform -translate-x-1/2 -translate-y-1/2 w-16 h-px bg-gradient-to-r from-primary/40 to-transparent hidden lg:block"></div>
-
-            {/* Story Item 1 - How We Met (Left Image, Right Content) */}
-            <div className="relative mb-20 lg:mb-32">
-              <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-                <div className="lg:order-1 relative">
+          {isFamilyVersion ? (
+            /* Family-Friendly Story Version */
+            <div className="max-w-4xl mx-auto">
+              <div className="grid lg:grid-cols-2 gap-12 items-center">
+                <div className="order-2 lg:order-1">
                   <StoryPhotoCarousel
-                    photos={vancouverPhotos}
-                    badgeText="Vancouver, Canada 🇨🇦"
+                    photos={familyPhotos}
+                    badgeText="Our Journey 💕"
                     badgeColor="primary"
                   />
                 </div>
-                <div className="lg:order-2 space-y-6">
+                <div className="order-1 lg:order-2 space-y-6">
                   <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
-                    <Heart className="w-4 h-4" />
-                    Chapter 1: The Beginning
+                    <Heart className="w-4 h-4" />A Love Story
                   </div>
                   <h3 className="font-serif text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-                    How We Met: A Vancouver Love Story
+                    How We Met & Our Journey Together
                   </h3>
                   <p className="text-lg text-gray-800 dark:text-gray-200 leading-relaxed">
-                    Our love story began in the beautiful city of Vancouver,
-                    Canada, where our mutual friend Jimit played cupid and
-                    introduced us. Before romance even entered the picture, we
-                    found ourselves on an epic adventure to the Yukon with
-                    friends, chasing the Northern Lights. Little did we know
-                    we'd find our own kind of magic right there in the group!
-                    What followed was Sneha's strategic mastermind plan
-                    involving dance classes and mysteriously acquiring a fob to
-                    Abhinav's building pool for "swimming lessons" (complete
-                    with backup friend Ria).
+                    Sneha and Abhinav met in beautiful Vancouver, Canada, where
+                    they quickly became the best of friends. Through shared
+                    adventures, travels, and countless happy moments, their
+                    friendship blossomed into something truly special. From
+                    exploring the Canadian wilderness to making memories around
+                    the world, they discovered they were perfect partners in
+                    life. Their love story reached its most beautiful moment
+                    when Abhinav proposed at the stunning Moraine Lake, and now
+                    they're excited to celebrate this new chapter with all their
+                    loved ones in Udaipur this December!
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <span className="bg-accent/30 text-accent-foreground px-3 py-1 rounded-full text-sm">
-                      Northern Lights ✨
+                      Best Friends ❤️
                     </span>
                     <span className="bg-accent/30 text-accent-foreground px-3 py-1 rounded-full text-sm">
-                      Swimming Pool Strategy 🏊‍♀️
+                      Travel Adventures ✈️
                     </span>
                     <span className="bg-accent/30 text-accent-foreground px-3 py-1 rounded-full text-sm">
-                      Stanley Park 🚴‍♂️
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Story Item 2 - Adventures Together (Right Image, Left Content) */}
-            <div className="relative mb-20 lg:mb-32">
-              <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-                <div className="lg:order-2 relative">
-                  <StoryPhotoCarousel
-                    photos={adventurePhotos}
-                    badgeText="Adventures & Fun 🎮"
-                    badgeColor="secondary"
-                  />
-                </div>
-                <div className="lg:order-1 space-y-6">
-                  <div className="inline-flex items-center gap-2 bg-secondary/10 text-secondary px-4 py-2 rounded-full text-sm font-medium">
-                    <Users className="w-4 h-4" />
-                    Chapter 2: Adventures
-                  </div>
-                  <h3 className="font-serif text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-                    Inseparable Adventures
-                  </h3>
-                  <p className="text-lg text-gray-800 dark:text-gray-200 leading-relaxed">
-                    From there, we were inseparable - partying together, having
-                    epic game nights, trying surfing, and going on camping trips
-                    that tested our relationship survival skills (spoiler: we
-                    passed!). We're complete opposites in the best way: Sneha's
-                    sweet tooth meets Abhinav's fitness obsession, creating the
-                    perfect balance. Our first TV show as a couple was{" "}
-                    <em>The Office</em>, which basically means our relationship
-                    foundation was built on Jim and Pam references.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="bg-secondary/20 text-secondary px-3 py-1 rounded-full text-sm">
-                      The Office 📺
-                    </span>
-                    <span className="bg-secondary/20 text-secondary px-3 py-1 rounded-full text-sm">
-                      Game Nights 🎮
-                    </span>
-                    <span className="bg-secondary/20 text-secondary px-3 py-1 rounded-full text-sm">
-                      Surfing 🏄‍♂️
-                    </span>
-                    <span className="bg-secondary/20 text-secondary px-3 py-1 rounded-full text-sm">
-                      Camping ⛺
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Story Item 3 - The Proposal (Left Image, Right Content) */}
-            <div className="relative mb-16">
-              <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-                <div className="lg:order-1 relative">
-                  <StoryPhotoCarousel
-                    photos={proposalPhotos}
-                    badgeText="Moraine Lake 💍"
-                    badgeColor="accent"
-                  />
-                </div>
-                <div className="lg:order-2 space-y-6">
-                  <div className="inline-flex items-center gap-2 bg-accent/10 text-accent-foreground px-4 py-2 rounded-full text-sm font-medium">
-                    <Heart className="w-4 h-4" />
-                    Chapter 3: Forever
-                  </div>
-                  <h3 className="font-serif text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-                    The Proposal & Our Future
-                  </h3>
-                  <p className="text-lg text-gray-800 dark:text-gray-200 leading-relaxed">
-                    Recently, we took our biggest adventure yet: a 10-day RV
-                    trip with our closest friends through the Canadian Rockies.
-                    At the breathtakingly beautiful Moraine Lake, Abhinav got
-                    down on one knee and asked Sneha to be his adventure partner
-                    for life. From the Northern Lights to Moraine Lake, from
-                    Stanley Park bike rides to RV road trips, every adventure
-                    has led us here - to December 10th & 11th, 2024, when we'll
-                    officially become the Jains!
-                  </p>
-                  <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-6 rounded-2xl border border-primary/20">
-                    <p className="text-gray-900 dark:text-white font-medium text-center">
-                      "We can't wait to celebrate with all of you in beautiful
-                      Udaipur!"
-                    </p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 text-center mt-2">
-                      P.S. - There will definitely be tiramisu at the reception!
-                      😉
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="bg-accent/20 text-accent-foreground px-3 py-1 rounded-full text-sm">
-                      RV Adventures 🚐
-                    </span>
-                    <span className="bg-accent/20 text-accent-foreground px-3 py-1 rounded-full text-sm">
                       Moraine Lake 💍
                     </span>
-                    <span className="bg-accent/20 text-accent-foreground px-3 py-1 rounded-full text-sm">
-                      Tiramisu Promise 🍰
+                    <span className="bg-accent/30 text-accent-foreground px-3 py-1 rounded-full text-sm">
+                      December 2024 💕
                     </span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          ) : (
+            /* Original Detailed Story Version */
+            <div className="relative">
+              {/* Elegant Timeline Connector */}
+              <div className="absolute left-1/2 transform -translate-x-1/2 top-16 bottom-16 w-px bg-gradient-to-b from-primary/20 via-primary/40 to-primary/20 hidden lg:block">
+                {/* Chapter connection dots */}
+                <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-primary/50 rounded-full border-2 border-background shadow-lg"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-primary/50 rounded-full border-2 border-background shadow-lg"></div>
+                <div className="absolute top-3/4 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-primary/50 rounded-full border-2 border-background shadow-lg"></div>
+              </div>
+
+              {/* Branch connectors for each section */}
+              <div className="absolute left-1/2 top-1/4 transform -translate-x-1/2 -translate-y-1/2 w-16 h-px bg-gradient-to-r from-primary/40 to-transparent hidden lg:block"></div>
+              <div className="absolute right-1/2 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-16 h-px bg-gradient-to-l from-primary/40 to-transparent hidden lg:block"></div>
+              <div className="absolute left-1/2 top-3/4 transform -translate-x-1/2 -translate-y-1/2 w-16 h-px bg-gradient-to-r from-primary/40 to-transparent hidden lg:block"></div>
+
+              {/* Story Item 1 - How We Met (Left Image, Right Content) */}
+              <div className="relative mb-20 lg:mb-32">
+                <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+                  <div className="lg:order-1 relative">
+                    <StoryPhotoCarousel
+                      photos={vancouverPhotos}
+                      badgeText="Vancouver, Canada 🇨🇦"
+                      badgeColor="primary"
+                    />
+                  </div>
+                  <div className="lg:order-2 space-y-6">
+                    <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
+                      <Heart className="w-4 h-4" />
+                      Chapter 1: The Beginning
+                    </div>
+                    <h3 className="font-serif text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+                      How We Met: A Vancouver Love Story
+                    </h3>
+                    <p className="text-lg text-gray-800 dark:text-gray-200 leading-relaxed">
+                      Our love story began in the beautiful city of Vancouver,
+                      Canada, where our mutual friend Jimit played cupid and
+                      introduced us. Before romance even entered the picture, we
+                      found ourselves on an epic adventure to the Yukon with
+                      friends, chasing the Northern Lights. Little did we know
+                      we'd find our own kind of magic right there in the group!
+                      What followed was Sneha's strategic mastermind plan
+                      involving dance classes and mysteriously acquiring a fob
+                      to Abhinav's building pool for "swimming lessons"
+                      (complete with friend Ria).
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="bg-accent/30 text-accent-foreground px-3 py-1 rounded-full text-sm">
+                        Northern Lights ✨
+                      </span>
+                      <span className="bg-accent/30 text-accent-foreground px-3 py-1 rounded-full text-sm">
+                        Swimming Pool Strategy 🏊‍♀️
+                      </span>
+                      <span className="bg-accent/30 text-accent-foreground px-3 py-1 rounded-full text-sm">
+                        Stanley Park 🚴‍♂️
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Story Item 2 - Adventures Together (Right Image, Left Content) */}
+              <div className="relative mb-20 lg:mb-32">
+                <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+                  <div className="lg:order-2 relative">
+                    <StoryPhotoCarousel
+                      photos={adventurePhotos}
+                      badgeText="Adventures & Fun 🎮"
+                      badgeColor="secondary"
+                    />
+                  </div>
+                  <div className="lg:order-1 space-y-6">
+                    <div className="inline-flex items-center gap-2 bg-secondary/10 text-secondary px-4 py-2 rounded-full text-sm font-medium">
+                      <Users className="w-4 h-4" />
+                      Chapter 2: Adventures
+                    </div>
+                    <h3 className="font-serif text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+                      Inseparable Adventures
+                    </h3>
+                    <p className="text-lg text-gray-800 dark:text-gray-200 leading-relaxed">
+                      From there, we were inseparable - partying together,
+                      having epic game nights, trying surfing, and going on
+                      camping trips that tested our relationship survival skills
+                      (spoiler: we passed!). We're complete opposites in the
+                      best way: Sneha's sweet tooth meets Abhinav's fitness
+                      obsession, creating the perfect balance. Our first TV show
+                      as a couple was <em>The Office</em>, which basically means
+                      our relationship foundation was built on Jim and Pam
+                      references.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="bg-secondary/20 text-secondary px-3 py-1 rounded-full text-sm">
+                        The Office 📺
+                      </span>
+                      <span className="bg-secondary/20 text-secondary px-3 py-1 rounded-full text-sm">
+                        Game Nights 🎮
+                      </span>
+                      <span className="bg-secondary/20 text-secondary px-3 py-1 rounded-full text-sm">
+                        Surfing 🏄‍♂️
+                      </span>
+                      <span className="bg-secondary/20 text-secondary px-3 py-1 rounded-full text-sm">
+                        Camping ⛺
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Story Item 3 - The Proposal (Left Image, Right Content) */}
+              <div className="relative mb-16">
+                <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+                  <div className="lg:order-1 relative">
+                    <StoryPhotoCarousel
+                      photos={proposalPhotos}
+                      badgeText="Moraine Lake 💍"
+                      badgeColor="accent"
+                    />
+                  </div>
+                  <div className="lg:order-2 space-y-6">
+                    <div className="inline-flex items-center gap-2 bg-accent/10 text-accent-foreground px-4 py-2 rounded-full text-sm font-medium">
+                      <Heart className="w-4 h-4" />
+                      Chapter 3: Forever
+                    </div>
+                    <h3 className="font-serif text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+                      The Proposal & Our Future
+                    </h3>
+                    <p className="text-lg text-gray-800 dark:text-gray-200 leading-relaxed">
+                      Recently, we took our biggest adventure yet: a 10-day RV
+                      trip with our closest friends through the Canadian
+                      Rockies. At the breathtakingly beautiful Moraine Lake,
+                      Abhinav got down on one knee and asked Sneha to be his
+                      adventure partner for life. From the Northern Lights to
+                      Moraine Lake, from Stanley Park bike rides to RV road
+                      trips, every adventure has led us here - to December 10th
+                      & 11th, 2024, when we'll officially become the Jains!
+                    </p>
+                    <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-6 rounded-2xl border border-primary/20">
+                      <p className="text-gray-900 dark:text-white font-medium text-center">
+                        "We can't wait to celebrate with all of you in beautiful
+                        Udaipur!"
+                      </p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 text-center mt-2">
+                        P.S. - There will definitely be tiramisu at the
+                        reception! 😉
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="bg-accent/20 text-accent-foreground px-3 py-1 rounded-full text-sm">
+                        RV Adventures 🚐
+                      </span>
+                      <span className="bg-accent/20 text-accent-foreground px-3 py-1 rounded-full text-sm">
+                        Moraine Lake 💍
+                      </span>
+                      <span className="bg-accent/20 text-accent-foreground px-3 py-1 rounded-full text-sm">
+                        Tiramisu Promise 🍰
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -346,7 +432,7 @@ export default function Home() {
                   <Calendar className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="font-serif text-xl font-semibold mb-4 text-foreground">
-                  Haldi
+                  Minted Sunshine Haldi
                 </h3>
                 <p className="text-muted-foreground mb-2">
                   Friday, December 10, 2024
@@ -365,7 +451,7 @@ export default function Home() {
                   <Heart className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="font-serif text-xl font-semibold mb-4 text-foreground">
-                  Sangeet & Reception
+                  Jashn-e-Mastani
                 </h3>
                 <p className="text-muted-foreground mb-2">
                   Friday, December 10, 2024
@@ -384,14 +470,14 @@ export default function Home() {
                   <Users className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="font-serif text-xl font-semibold mb-4 text-foreground">
-                  Shagna di Shaam (Pheras)
+                  Shagna di Shaam
                 </h3>
                 <p className="text-muted-foreground mb-2">
                   Saturday, December 11, 2024
                 </p>
                 <p className="text-muted-foreground mb-4">2:00 PM - 6:00 PM</p>
                 <p className="text-sm text-muted-foreground">
-                  Wedding Ceremony with Lunch, Snacks & Dinner
+                  Pheras with Lunch, Snacks & Dinner
                 </p>
               </CardContent>
             </Card>
