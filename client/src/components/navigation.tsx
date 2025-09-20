@@ -3,10 +3,12 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Navigation() {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const navItems = [
     { href: "/", label: "Home", id: "home" },
@@ -73,6 +75,13 @@ export default function Navigation() {
                 RSVP
               </Button>
             </Link>
+            {!isAuthenticated && (
+              <Link href="/login">
+                <Button variant="outline" size="sm" data-testid="nav-admin">
+                  Admin
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Navigation */}
@@ -108,6 +117,18 @@ export default function Navigation() {
                       RSVP
                     </Button>
                   </Link>
+                  {!isAuthenticated && (
+                    <Link href="/login">
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setIsOpen(false)}
+                        data-testid="nav-mobile-admin"
+                      >
+                        Admin
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>

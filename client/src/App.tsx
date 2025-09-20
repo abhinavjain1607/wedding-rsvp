@@ -7,7 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import RSVP from "@/pages/rsvp";
-import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import PhotoUpload from "@/pages/photo-upload";
 import AdminDashboard from "@/pages/admin/dashboard";
@@ -20,10 +19,7 @@ function Router() {
   return (
     <Switch>
       {/* Public routes */}
-      <Route
-        path="/"
-        component={isLoading || !isAuthenticated ? Landing : Home}
-      />
+      <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
       <Route path="/rsvp" component={RSVP} />
       <Route path="/photo-upload" component={PhotoUpload} />

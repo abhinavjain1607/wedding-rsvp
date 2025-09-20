@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -42,12 +42,20 @@
   --font-mono: "Menlo", monospace;
   --radius: 0.75rem;
   --shadow-2xs: 0px 1px 2px 0px hsl(24, 15%, 88%, 0.05);
-  --shadow-xs: 0px 1px 3px 0px hsl(24, 15%, 88%, 0.1), 0px 1px 2px 0px hsl(24, 15%, 88%, 0.06);
-  --shadow-sm: 0px 1px 3px 0px hsl(24, 15%, 88%, 0.1), 0px 1px 2px 0px hsl(24, 15%, 88%, 0.06);
-  --shadow: 0px 1px 3px 0px hsl(24, 15%, 88%, 0.1), 0px 1px 2px 0px hsl(24, 15%, 88%, 0.06);
-  --shadow-md: 0px 4px 6px -1px hsl(24, 15%, 88%, 0.1), 0px 2px 4px -1px hsl(24, 15%, 88%, 0.06);
-  --shadow-lg: 0px 10px 15px -3px hsl(24, 15%, 88%, 0.1), 0px 4px 6px -2px hsl(24, 15%, 88%, 0.05);
-  --shadow-xl: 0px 20px 25px -5px hsl(24, 15%, 88%, 0.1), 0px 10px 10px -5px hsl(24, 15%, 88%, 0.04);
+  --shadow-xs: 0px 1px 3px 0px hsl(24, 15%, 88%, 0.1),
+    0px 1px 2px 0px hsl(24, 15%, 88%, 0.06);
+  --shadow-sm: 0px 1px 3px 0px hsl(24, 15%, 88%, 0.1),
+    0px 1px 2px 0px hsl(24, 15%, 88%, 0.06);
+  --shadow: 0px 1px 3px 0px hsl(24, 15%, 88%, 0.1),
+    0px 1px 2px 0px hsl(24, 15%, 88%, 0.06);
+  --shadow-3xl: 0px 32px 64px -12px rgba(0, 0, 0, 0.25),
+    0px 0px 0px 1px rgba(255, 255, 255, 0.05);
+  --shadow-md: 0px 4px 6px -1px hsl(24, 15%, 88%, 0.1),
+    0px 2px 4px -1px hsl(24, 15%, 88%, 0.06);
+  --shadow-lg: 0px 10px 15px -3px hsl(24, 15%, 88%, 0.1),
+    0px 4px 6px -2px hsl(24, 15%, 88%, 0.05);
+  --shadow-xl: 0px 20px 25px -5px hsl(24, 15%, 88%, 0.1),
+    0px 10px 10px -5px hsl(24, 15%, 88%, 0.04);
   --shadow-2xl: 0px 25px 50px -12px hsl(24, 15%, 88%, 0.25);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
@@ -91,17 +99,27 @@
   --font-mono: "Menlo", monospace;
   --radius: 0.75rem;
   --shadow-2xs: 0px 1px 2px 0px hsl(24, 15%, 22%, 0.05);
-  --shadow-xs: 0px 1px 3px 0px hsl(24, 15%, 22%, 0.1), 0px 1px 2px 0px hsl(24, 15%, 22%, 0.06);
-  --shadow-sm: 0px 1px 3px 0px hsl(24, 15%, 22%, 0.1), 0px 1px 2px 0px hsl(24, 15%, 22%, 0.06);
-  --shadow: 0px 1px 3px 0px hsl(24, 15%, 22%, 0.1), 0px 1px 2px 0px hsl(24, 15%, 22%, 0.06);
-  --shadow-md: 0px 4px 6px -1px hsl(24, 15%, 22%, 0.1), 0px 2px 4px -1px hsl(24, 15%, 22%, 0.06);
-  --shadow-lg: 0px 10px 15px -3px hsl(24, 15%, 22%, 0.1), 0px 4px 6px -2px hsl(24, 15%, 22%, 0.05);
-  --shadow-xl: 0px 20px 25px -5px hsl(24, 15%, 22%, 0.1), 0px 10px 10px -5px hsl(24, 15%, 22%, 0.04);
+  --shadow-xs: 0px 1px 3px 0px hsl(24, 15%, 22%, 0.1),
+    0px 1px 2px 0px hsl(24, 15%, 22%, 0.06);
+  --shadow-sm: 0px 1px 3px 0px hsl(24, 15%, 22%, 0.1),
+    0px 1px 2px 0px hsl(24, 15%, 22%, 0.06);
+  --shadow: 0px 1px 3px 0px hsl(24, 15%, 22%, 0.1),
+    0px 1px 2px 0px hsl(24, 15%, 22%, 0.06);
+  --shadow-md: 0px 4px 6px -1px hsl(24, 15%, 22%, 0.1),
+    0px 2px 4px -1px hsl(24, 15%, 22%, 0.06);
+  --shadow-lg: 0px 10px 15px -3px hsl(24, 15%, 22%, 0.1),
+    0px 4px 6px -2px hsl(24, 15%, 22%, 0.05);
+  --shadow-xl: 0px 20px 25px -5px hsl(24, 15%, 22%, 0.1),
+    0px 10px 10px -5px hsl(24, 15%, 22%, 0.04);
   --shadow-2xl: 0px 25px 50px -12px hsl(24, 15%, 22%, 0.25);
 }
 
 .hero-gradient {
-  background: linear-gradient(135deg, hsl(350, 65%, 75%, 0.1) 0%, hsl(140, 30%, 70%, 0.1) 100%);
+  background: linear-gradient(
+    135deg,
+    hsl(350, 65%, 75%, 0.1) 0%,
+    hsl(140, 30%, 70%, 0.1) 100%
+  );
 }
 
 .glass-effect {
@@ -118,7 +136,30 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-serif;
   }
+}
+
+/* Custom dotted line for story timeline */
+.bg-dotted-line {
+  background-image: radial-gradient(
+    circle,
+    hsl(350, 65%, 75%) 1px,
+    transparent 1px
+  );
+  background-size: 1px 20px;
+  background-repeat: repeat-y;
+  background-position: center;
+}
+
+/* Enhanced shadow utility */
+.shadow-3xl {
+  box-shadow: 0px 32px 64px -12px rgba(0, 0, 0, 0.25),
+    0px 0px 0px 1px rgba(255, 255, 255, 0.05);
 }
