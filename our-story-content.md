@@ -42,7 +42,7 @@ Our most recent adventure took us to Montreal and Quebec City, where we fell in 
 
 ## Looking Forward 🌟
 
-From the Northern Lights to Moraine Lake, from Stanley Park bike rides to RV road trips, every adventure has led us here - to December 10th & 11th, 2024, when we'll officially become the Jains!
+From the Northern Lights to Moraine Lake, from Stanley Park bike rides to RV road trips, every adventure has led us here - to December 10th & 11th, 2025, when we'll officially become the Jains!
 
 We can't wait to celebrate with all of you in beautiful Udaipur, where our next chapter begins. And yes, there will definitely be tiramisu at the reception. Some things are non-negotiable! 😉
 

@@ -192,7 +192,7 @@ async function initializeDefaultTemplates() {
 We're thrilled to confirm that you've successfully registered for our wedding celebration! 
 
 ✅ Your RSVP Status: {{rsvpStatus}}
-� Wedding Date: December 11th, 2024
+� Wedding Date: December 11th, 2025
 
 📱 *Important: Save this WhatsApp number!*
 We'll send all wedding updates, including:
@@ -222,7 +222,7 @@ Abhinav & Sneha 💕
 We're thrilled to confirm that you've successfully registered for our wedding celebration! 
 
 ✅ Your RSVP Status: {{rsvpStatus}}
-📅 Wedding Dates: December 10th & 11th, 2024
+📅 Wedding Dates: December 10th & 11th, 2025
 
 📱 *Important: Save this WhatsApp number!*
 We'll send all wedding updates, including:
@@ -259,7 +259,7 @@ Thank you for providing all your details. Here's what we have on file:
 • RSVP Status: {{rsvpStatus}}
 • Transport: {{transportMode}}
 
-📅 *Wedding Dates: December 10th & 11th, 2024*
+📅 *Wedding Dates: December 10th & 11th, 2025*
 
 ✅ *You're all set!* No further action needed.
 
@@ -295,7 +295,7 @@ Thank you for providing all your details. Here's what we have on file:
 • RSVP Status: {{rsvpStatus}}
 • Transport: {{transportMode}}
 
-📅 *Wedding Dates: December 10th & 11th, 2024*
+📅 *Wedding Dates: December 10th & 11th, 2025*
 
 ✅ *You're all set!* No further action needed.
 
@@ -327,7 +327,7 @@ Abhinav & Sneha 💕
         subject: "Default Message",
         content: `Hi {{firstName}}! 👋
 
-Hope you're doing well! We wanted to reach out with an update about our wedding on December 10th & 11th, 2024.
+Hope you're doing well! We wanted to reach out with an update about our wedding on December 10th & 11th, 2025.
 
 [Your message content here]
 
@@ -355,7 +355,7 @@ Abhinav & Sneha 💕`,
         subject: "Gentle Reminder to RSVP",
         content: `Hi {{firstName}}! 🌟
 
-We hope you're doing well! This is a gentle reminder that we haven't received your RSVP yet for our wedding on December 10th & 11th, 2024.
+We hope you're doing well! This is a gentle reminder that we haven't received your RSVP yet for our wedding on December 10th & 11th, 2025.
 
 💌 We'd love to celebrate with you and need to finalize our guest count soon.
 

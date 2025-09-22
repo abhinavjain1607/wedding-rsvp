@@ -48,6 +48,23 @@ export function StoryPhotoCarousel({
           src={photos[currentIndex].src}
           alt={photos[currentIndex].alt}
           className="w-full aspect-[4/3] object-cover transform group-hover:scale-105 transition-all duration-500 group-hover:shadow-3xl shadow-2xl rounded-2xl"
+          style={{
+            objectPosition: photos[currentIndex].src.includes(
+              "moraine-proposal"
+            )
+              ? "50% 63%"
+              : photos[currentIndex].src.includes("peyto-ring")
+              ? "50% 30%"
+              : photos[currentIndex].src.includes("bow-walk")
+              ? "50% 35%"
+              : photos[currentIndex].src.includes("yukon-snow")
+              ? "50% 25%"
+              : photos[currentIndex].src.includes("family")
+              ? "50% 30%"
+              : photos[currentIndex].src.includes("cherry-blossom")
+              ? "50% 35%"
+              : "center",
+          }}
         />
 
         {/* Navigation Arrows */}

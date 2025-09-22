@@ -35,77 +35,82 @@ export default function Home() {
     queryKey: ["/api/qr-code"],
   });
 
-  // Family-friendly photo collection
+  // Family-friendly photo collection - using engagement/proposal photos
   const familyPhotos = [
     {
-      src: "/images/story/couple-story.jpg",
+      src: "/images/photoshoot/moraine-proposal.jpeg",
       alt: "Sneha & Abhinav - A beautiful love story",
-      caption: "A wonderful couple ready for their next adventure",
+      caption: "A magical proposal moment at the breathtaking Moraine Lake",
     },
     {
-      src: "/images/gallery/gallery-1.jpg",
-      alt: "Adventure and travel memories",
-      caption: "Making beautiful memories together",
+      src: "/images/photoshoot/peyto-ring.jpeg",
+      alt: "Beautiful engagement moments",
+      caption: "Celebrating our engagement in the Canadian Rockies",
     },
     {
-      src: "/images/gallery/gallery-3.jpg",
-      alt: "Proposal moment",
-      caption: "A special moment at Moraine Lake",
+      src: "/images/photoshoot/bow-walk.jpeg",
+      alt: "Romantic couple moments",
+      caption: "A special moment captured forever",
     },
   ];
 
   // Photo collections for story carousels
   const vancouverPhotos = [
     {
-      src: "/images/story/couple-story.jpg",
+      src: "/images/travel/yukon-snow.jpg",
       alt: "Vancouver - Where it all began",
       caption: "Our adventure began in beautiful Vancouver",
     },
     {
-      src: "/images/gallery/gallery-1.jpg",
-      alt: "Northern Lights adventure",
-      caption: "Chasing Northern Lights in the Yukon",
+      src: "images/travel/smile-cincin.jpg",
+      alt: "Special moments together",
+      caption: "Capturing smiles and laughter in the city",
     },
     {
-      src: "/images/gallery/gallery-4.jpg",
-      alt: "Stanley Park moments",
-      caption: "Bike rides through Stanley Park",
+      src: "/images/family/kits-volleyball.jpeg",
+      alt: "Active life in Vancouver",
+      caption: "Enjoying beach volleyball at Kits",
     },
   ];
 
   const adventurePhotos = [
     {
-      src: "/images/gallery/gallery-2.jpg",
+      src: "/images/travel/mt-rainier.jpg",
       alt: "Adventures and fun times together",
-      caption: "Game nights and adventures",
+      caption: "Hiking Mount Rainier together",
     },
     {
-      src: "/images/gallery/gallery-5.jpg",
-      alt: "Surfing attempts",
-      caption: "Trying surfing (with mixed results!)",
+      src: "/images/travel/boat-party.jpg",
+      alt: "Fun celebration moments",
+      caption: "Celebrating life together",
     },
     {
-      src: "/images/gallery/gallery-6.jpg",
-      alt: "Camping adventures",
-      caption: "Camping trips that tested our survival skills",
+      src: "/images/travel/hike-glacier.jpg",
+      alt: "Hiking adventures",
+      caption: "Exploring glaciers and mountains",
+    },
+    {
+      src: "/images/travel/sf-rubi-pg.jpg",
+      alt: "Travel celebrations",
+      caption: "Adventures in San Francisco",
     },
   ];
 
   const proposalPhotos = [
     {
-      src: "/images/gallery/gallery-3.jpg",
-      alt: "Moraine Lake - Where forever began",
-      caption: "The magical proposal at Moraine Lake",
+      src: "/images/photoshoot/moraine-proposal.jpeg",
+      alt: "The magical proposal moment at Moraine Lake",
+      caption: "A perfect proposal at the stunning Moraine Lake",
     },
     {
-      src: "/images/gallery/gallery-1.jpg",
-      alt: "RV trip adventures",
-      caption: "Epic 10-day RV trip through the Rockies",
+      src: "/images/photoshoot/peyto-ring.jpeg",
+      alt: "Beautiful engagement moments",
+      caption: "Exploring beautiful glaciers and mountain trails",
     },
     {
-      src: "/images/gallery/gallery-4.jpg",
-      alt: "Adventure partners for life",
-      caption: "Ready for our next adventure together",
+      src: "/images/photoshoot/bow-movie.jpeg",
+      alt: "Romantic moment captured in the Canadian Rockies",
+      caption: "Beautiful moments in the Canadian wilderness",
     },
   ];
 
@@ -119,61 +124,104 @@ export default function Home() {
       {/* Hero Section */}
       <section
         id="home"
-        className="hero-gradient h-screen flex items-center justify-center relative overflow-hidden"
+        className="relative h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"
       >
+        {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           {/* Desktop/Tablet image - centered */}
           <img
             src="/images/hero/wedding-couple.jpg"
             alt="Elegant wedding couple portrait"
-            className="hidden sm:block w-full h-full object-cover object-center opacity-30"
+            className="hidden sm:block w-full h-full object-cover object-center"
           />
           {/* Mobile image - positioned to show both people, especially Sneha on the right */}
           <img
             src="/images/hero/wedding-couple.jpg"
             alt="Elegant wedding couple portrait"
-            className="block sm:hidden w-full h-full object-cover opacity-40"
+            className="block sm:hidden w-full h-full object-cover"
             style={{
               objectPosition: "60% center",
             }}
           />
+          {/* Modern gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/40"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-transparent to-pink-600/20"></div>
         </div>
+
+        {/* Floating decorative elements */}
+        <div className="absolute inset-0 z-5 pointer-events-none">
+          <div className="absolute top-20 left-10 w-2 h-2 bg-white/20 rounded-full animate-pulse"></div>
+          <div className="absolute top-40 right-16 w-1 h-1 bg-pink-300/30 rounded-full animate-pulse delay-1000"></div>
+          <div className="absolute bottom-32 left-20 w-1.5 h-1.5 bg-purple-300/25 rounded-full animate-pulse delay-2000"></div>
+          <div className="absolute bottom-20 right-10 w-1 h-1 bg-white/15 rounded-full animate-pulse delay-3000"></div>
+        </div>
+
+        {/* Main content */}
         <div
-          className="relative z-10 text-center px-4 sm:px-6 lg:px-8"
+          className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto"
           data-testid="hero-content"
         >
-          <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold mb-6 text-foreground">
-            Sneha & Abhinav
-          </h1>
-          <p className="text-xl sm:text-2xl text-muted-foreground mb-8 font-light">
-            December 10-11, 2024
-          </p>
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8">
-            Shakti Vilas, Debari, Udaipur
-          </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <Link href="/rsvp">
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 w-48"
-                data-testid="button-rsvp"
+          {/* Elegant content without heavy container */}
+          <div className="space-y-8">
+            {/* Main title with elegant styling */}
+            <div className="space-y-6">
+              <h1 className="font-script text-5xl sm:text-7xl lg:text-8xl font-medium text-white drop-shadow-2xl tracking-wide">
+                Sneha <span className="text-pink-300">&</span> Abhinav
+              </h1>
+
+              {/* Subtle decorative element */}
+              <div className="flex items-center justify-center">
+                <div className="w-16 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"></div>
+                <div className="mx-4 w-1 h-1 bg-white/80 rounded-full"></div>
+                <div className="w-16 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"></div>
+              </div>
+            </div>
+
+            {/* Event details with refined styling */}
+            <div className="space-y-4 py-6">
+              <p
+                className="font-script text-xl sm:text-3xl text-white/95 font-medium tracking-wider"
+                style={{ fontSize: "min(2.25rem, 7vw)" }}
               >
-                RSVP Now
+                December 10-11, 2025
+              </p>
+              <p
+                className="font-script text-base sm:text-xl text-white/85 font-medium tracking-wide"
+                style={{ fontSize: "min(1.5rem, 5vw)" }}
+              >
+                Shakti Vilas, Debari, Udaipur
+              </p>
+            </div>
+
+            {/* Enhanced buttons without container */}
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-6">
+              <Link href="/rsvp">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0 w-52 h-14 rounded-full font-medium shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 text-lg tracking-wide"
+                  data-testid="button-rsvp"
+                >
+                  RSVP Now
+                </Button>
+              </Link>
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-52 h-14 border-2 border-white/60 text-white hover:bg-white/20 hover:border-white/80 hover:text-white rounded-full font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-lg tracking-wide backdrop-blur-sm bg-white/10"
+                onClick={() => {
+                  const detailsSection = document.getElementById("details");
+                  if (detailsSection) {
+                    detailsSection.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }
+                }}
+                data-testid="button-details"
+              >
+                View Details
               </Button>
-            </Link>
-            <Button
-              variant="outline"
-              size="lg"
-              className="w-48"
-              onClick={() =>
-                document
-                  .getElementById("details")
-                  ?.scrollIntoView({ behavior: "smooth" })
-              }
-              data-testid="button-details"
-            >
-              View Details
-            </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -206,7 +254,7 @@ export default function Home() {
                 <div className="order-2 lg:order-1">
                   <StoryPhotoCarousel
                     photos={familyPhotos}
-                    badgeText="Our Journey 💕"
+                    badgeText="Banff"
                     badgeColor="primary"
                   />
                 </div>
@@ -240,7 +288,7 @@ export default function Home() {
                       Moraine Lake 💍
                     </span>
                     <span className="bg-accent/30 text-accent-foreground px-3 py-1 rounded-full text-sm">
-                      December 2024 💕
+                      December 2025 💕
                     </span>
                   </div>
                 </div>
@@ -287,17 +335,17 @@ export default function Home() {
                       found ourselves on an epic adventure to the Yukon with
                       friends, chasing the Northern Lights. Little did we know
                       we'd find our own kind of magic right there in the group!
-                      What followed was Sneha's strategic mastermind plan
-                      involving dance classes and mysteriously acquiring a fob
-                      to Abhinav's building pool for "swimming lessons"
-                      (complete with friend Ria).
+                      What followed was beautifully organic - dance classes that
+                      turned into long walks around the city, swimming sessions
+                      that became our regular thing, and those unofficial dinner
+                      dates that somehow made everything click perfectly.
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <span className="bg-accent/30 text-accent-foreground px-3 py-1 rounded-full text-sm">
                         Northern Lights ✨
                       </span>
                       <span className="bg-accent/30 text-accent-foreground px-3 py-1 rounded-full text-sm">
-                        Swimming Pool Strategy 🏊‍♀️
+                        Swimming Pool 🏊‍♀️
                       </span>
                       <span className="bg-accent/30 text-accent-foreground px-3 py-1 rounded-full text-sm">
                         Stanley Park 🚴‍♂️
@@ -380,7 +428,7 @@ export default function Home() {
                       adventure partner for life. From the Northern Lights to
                       Moraine Lake, from Stanley Park bike rides to RV road
                       trips, every adventure has led us here - to December 10th
-                      & 11th, 2024, when we'll officially become the Jains!
+                      & 11th, 2025, when we'll officially become the Jains!
                     </p>
                     <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-6 rounded-2xl border border-primary/20">
                       <p className="text-gray-900 dark:text-white font-medium text-center">
@@ -435,7 +483,7 @@ export default function Home() {
                   Minted Sunshine Haldi
                 </h3>
                 <p className="text-muted-foreground mb-2">
-                  Friday, December 10, 2024
+                  Friday, December 10, 2025
                 </p>
                 <p className="text-muted-foreground mb-4">12:00 PM - 3:00 PM</p>
                 <p className="text-sm text-muted-foreground">
@@ -454,7 +502,7 @@ export default function Home() {
                   Jashn-e-Mastani
                 </h3>
                 <p className="text-muted-foreground mb-2">
-                  Friday, December 10, 2024
+                  Friday, December 10, 2025
                 </p>
                 <p className="text-muted-foreground mb-4">6:30 PM - 10:00 PM</p>
                 <p className="text-sm text-muted-foreground">
@@ -473,7 +521,7 @@ export default function Home() {
                   Shagna di Shaam
                 </h3>
                 <p className="text-muted-foreground mb-2">
-                  Saturday, December 11, 2024
+                  Saturday, December 11, 2025
                 </p>
                 <p className="text-muted-foreground mb-4">2:00 PM - 6:00 PM</p>
                 <p className="text-sm text-muted-foreground">

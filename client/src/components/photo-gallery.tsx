@@ -15,14 +15,14 @@ export default function PhotoGallery() {
     queryKey: ["/api/gallery"],
   });
 
-  // Default images if no custom images are uploaded - using local placeholders
+  // Default images if no custom images are uploaded - mix of family and friendly photos
   const defaultImages = [
-    "/images/gallery/gallery-1.jpg",
-    "/images/gallery/gallery-2.jpg",
-    "/images/gallery/gallery-3.jpg",
-    "/images/gallery/gallery-4.jpg",
-    "/images/gallery/gallery-5.jpg",
-    "/images/gallery/gallery-6.jpg",
+    "/images/travel/car-yukon.jpg",
+    "/images/travel/hike-joffrey.jpg",
+    "/images/family/cherry-blossom.jpeg",
+    "/images/travel/hike-north-cascades.jpg",
+    "/images/family/family.jpeg",
+    "/images/family/mama-mami.jpeg",
   ];
 
   const displayImages =
@@ -92,39 +92,61 @@ export default function PhotoGallery() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             data-testid="gallery-grid"
           >
-            {displayImages.map((image, index) => (
-              <div
-                key={image.id}
-                className="relative group overflow-hidden rounded-lg shadow-lg aspect-square"
-                data-testid={`gallery-item-${index}`}
-              >
-                <img
-                  src={image.imageUrl}
-                  alt={image.caption || `Gallery image ${index + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src =
-                      "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600";
-                  }}
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
+            {displayImages.map((image, index) => {
+              // Determine specific positioning for different image types
+              let objectPosition = "center";
 
-                {/* Caption overlay */}
-                {image.caption && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                    <p className="text-white text-sm font-medium">
-                      {image.caption}
-                    </p>
-                    {image.uploadedBy && (
-                      <p className="text-white/80 text-xs">
-                        by {image.uploadedBy}
+              if (image.imageUrl.includes("yukon-snow")) {
+                // Portrait photo - focus on upper-center where people are positioned
+                objectPosition = "50% 25%";
+              } else if (image.imageUrl.includes("family")) {
+                // Family photos - usually people in center-upper area
+                objectPosition = "50% 30%";
+              } else if (image.imageUrl.includes("cherry-blossom")) {
+                // Cherry blossom photos - focus on people in the scene
+                objectPosition = "50% 35%";
+              } else if (image.imageUrl.includes("kits-volleyball")) {
+                // Sports photo - focus on center action
+                objectPosition = "center";
+              }
+
+              return (
+                <div
+                  key={image.id}
+                  className="relative group overflow-hidden rounded-lg shadow-lg aspect-square"
+                  data-testid={`gallery-item-${index}`}
+                >
+                  <img
+                    src={image.imageUrl}
+                    alt={image.caption || `Gallery image ${index + 1}`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    style={{
+                      objectPosition: objectPosition,
+                    }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src =
+                        "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600";
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
+
+                  {/* Caption overlay */}
+                  {image.caption && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                      <p className="text-white text-sm font-medium">
+                        {image.caption}
                       </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+                      {image.uploadedBy && (
+                        <p className="text-white/80 text-xs">
+                          by {image.uploadedBy}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
