@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 export function useAuth() {
   // Check if user has explicitly logged out
   const isLoggedOut = localStorage.getItem("admin-logged-out") === "true";
-  
+
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,

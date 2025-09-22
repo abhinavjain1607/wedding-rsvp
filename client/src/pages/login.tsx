@@ -41,10 +41,10 @@ export default function Login() {
 
       if (response.ok) {
         const result = await response.json();
-        
+
         // Clear the logout flag to allow authentication
         localStorage.removeItem("admin-logged-out");
-        
+
         toast({
           title: "Login successful",
           description: `Welcome! Redirecting to admin dashboard...`,

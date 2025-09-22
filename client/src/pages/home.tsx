@@ -238,7 +238,7 @@ export default function Home() {
                     className="w-52 h-14 border-2 border-white/60 text-white hover:bg-white/20 hover:border-white/80 hover:text-white rounded-full font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-lg tracking-wide backdrop-blur-sm bg-white/10"
                     data-testid="button-admin"
                   >
-                    Admin Dashboard
+                    Admin
                   </Button>
                 </Link>
               )}
