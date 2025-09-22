@@ -75,10 +75,16 @@ export default function Navigation() {
                 RSVP
               </Button>
             </Link>
-            {!isAuthenticated && (
+            {!isAuthenticated ? (
               <Link href="/login">
                 <Button variant="outline" size="sm" data-testid="nav-admin">
                   Admin
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/admin">
+                <Button variant="outline" size="sm" data-testid="nav-admin-dashboard">
+                  Admin Dashboard
                 </Button>
               </Link>
             )}
@@ -117,7 +123,7 @@ export default function Navigation() {
                       RSVP
                     </Button>
                   </Link>
-                  {!isAuthenticated && (
+                  {!isAuthenticated ? (
                     <Link href="/login">
                       <Button
                         variant="outline"
@@ -126,6 +132,17 @@ export default function Navigation() {
                         data-testid="nav-mobile-admin"
                       >
                         Admin
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link href="/admin">
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setIsOpen(false)}
+                        data-testid="nav-mobile-admin-dashboard"
+                      >
+                        Admin Dashboard
                       </Button>
                     </Link>
                   )}

@@ -13,11 +13,21 @@ export default function AdminNavigation() {
   const [location] = useLocation();
   const { user } = useAuth();
 
-  const handleLogout = () => {
-    // Clear any stored auth state and redirect to home
-    localStorage.removeItem("admin-auth");
-    sessionStorage.clear();
-    window.location.href = "/";
+  const handleLogout = async () => {
+    try {
+      // Call the logout API endpoint
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear any stored auth state and redirect to home
+      localStorage.removeItem("admin-auth");
+      sessionStorage.clear();
+      window.location.href = "/";
+    }
   };
 
   const navItems = [

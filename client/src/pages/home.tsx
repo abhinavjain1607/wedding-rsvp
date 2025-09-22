@@ -4,6 +4,7 @@ import PhotoGallery from "@/components/photo-gallery";
 import { StoryPhotoCarousel } from "@/components/story-photo-carousel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Heart,
   Calendar,
@@ -26,6 +27,9 @@ export default function Home() {
   // Check for family-friendly version query parameter
   const urlParams = new URLSearchParams(window.location.search);
   const isFamilyVersion = urlParams.get("t") === "fm";
+  
+  // Get authentication status
+  const { isAuthenticated } = useAuth();
 
   const { data: content = [] } = useQuery<DashboardContent[]>({
     queryKey: ["/api/dashboard-content"],
@@ -226,6 +230,18 @@ export default function Home() {
               >
                 View Details
               </Button>
+              {isAuthenticated && (
+                <Link href="/admin">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-52 h-14 border-2 border-white/60 text-white hover:bg-white/20 hover:border-white/80 hover:text-white rounded-full font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-lg tracking-wide backdrop-blur-sm bg-white/10"
+                    data-testid="button-admin"
+                  >
+                    Admin Dashboard
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
