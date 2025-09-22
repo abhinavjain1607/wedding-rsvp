@@ -55,6 +55,7 @@ const step2Schema = z.object({
   needsTransportDec11: z.boolean(),
   needsTransportReturn: z.boolean(),
   flightNumber: z.string().optional(),
+  trainNumber: z.string().optional(),
   pickupDate: z.string().optional(),
   pickupTime: z.string().optional(),
   dropoffDate: z.string().optional(),
@@ -92,8 +93,12 @@ export default function RSVP() {
       needsTransportDec10: false,
       needsTransportDec11: false,
       needsTransportReturn: false,
+      trainNumber: "",
     },
   });
+
+  // Watch transport mode to conditionally show fields
+  const watchedTransportMode = step2Form.watch("transportMode");
 
   const findForm = useForm<FindGuestData>({
     resolver: zodResolver(findGuestSchema),
@@ -289,6 +294,7 @@ export default function RSVP() {
           needsTransportDec11: guest.needsTransportDec11 || false,
           needsTransportReturn: guest.needsTransportReturn || false,
           flightNumber: guest.flightNumber || "",
+          trainNumber: guest.trainNumber || "",
           pickupDate: guest.pickupDate || "",
           pickupTime: guest.pickupTime || "",
           dropoffDate: guest.dropoffDate || "",
@@ -871,17 +877,34 @@ export default function RSVP() {
                       )}
                     </div>
 
-                    <div>
-                      <Label htmlFor="flightNumber">
-                        Flight Number (if applicable)
-                      </Label>
-                      <Input
-                        id="flightNumber"
-                        placeholder="e.g., AI 123"
-                        {...step2Form.register("flightNumber")}
-                        className="mt-1"
-                      />
-                    </div>
+                    {/* Conditional fields based on transport mode */}
+                    {watchedTransportMode === "flight" && (
+                      <div>
+                        <Label htmlFor="flightNumber">
+                          Flight Number (optional)
+                        </Label>
+                        <Input
+                          id="flightNumber"
+                          placeholder="e.g., AI 123"
+                          {...step2Form.register("flightNumber")}
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
+
+                    {watchedTransportMode === "train" && (
+                      <div>
+                        <Label htmlFor="trainNumber">
+                          Train Number (optional)
+                        </Label>
+                        <Input
+                          id="trainNumber"
+                          placeholder="e.g., 12345"
+                          {...step2Form.register("trainNumber")}
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Transport Service Section */}
@@ -899,26 +922,29 @@ export default function RSVP() {
                     </p>
 
                     <div className="space-y-3">
-                      <div className="flex items-center space-x-3 p-4 border border-input rounded-lg">
-                        <input
-                          type="checkbox"
-                          id="needsTransportDec9"
-                          {...step2Form.register("needsTransportDec9")}
-                          className="rounded"
-                        />
-                        <div className="flex-1">
-                          <Label
-                            htmlFor="needsTransportDec9"
-                            className="font-medium cursor-pointer"
-                          >
-                            Pickup on December 9th
-                          </Label>
-                          <p className="text-sm text-muted-foreground">
-                            Airport/station pickup service for guest arrivals
-                            (6:00 AM - 10:00 PM)
-                          </p>
+                      {/* December 9th pickup option - temporarily hidden */}
+                      {false && (
+                        <div className="flex items-center space-x-3 p-4 border border-input rounded-lg">
+                          <input
+                            type="checkbox"
+                            id="needsTransportDec9"
+                            {...step2Form.register("needsTransportDec9")}
+                            className="rounded"
+                          />
+                          <div className="flex-1">
+                            <Label
+                              htmlFor="needsTransportDec9"
+                              className="font-medium cursor-pointer"
+                            >
+                              Pickup on December 9th
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              Airport/station pickup service for guest arrivals
+                              (6:00 AM - 10:00 PM)
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       <div className="flex items-center space-x-3 p-4 border border-input rounded-lg">
                         <input

@@ -111,7 +111,7 @@ export default function AdminContent() {
   const uploadGalleryMutation = useMutation({
     mutationFn: async (files: FileList) => {
       const formData = new FormData();
-      Array.from(files).forEach(file => {
+      Array.from(files).forEach((file) => {
         formData.append("images", file);
       });
       return apiRequest("POST", "/api/admin/gallery", formData);
@@ -157,8 +157,10 @@ export default function AdminContent() {
     const files = event.target.files;
     if (files) {
       const maxSize = 5 * 1024 * 1024; // 5MB
-      const invalidFiles = Array.from(files).filter(file => file.size > maxSize);
-      
+      const invalidFiles = Array.from(files).filter(
+        (file) => file.size > maxSize
+      );
+
       if (invalidFiles.length > 0) {
         toast({
           title: "Files too large",
@@ -200,13 +202,18 @@ export default function AdminContent() {
   return (
     <div className="min-h-screen bg-background">
       <AdminNavigation />
-      
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-serif font-bold text-foreground mb-2" data-testid="content-title">
+          <h1
+            className="text-2xl font-serif font-bold text-foreground mb-2"
+            data-testid="content-title"
+          >
             Content Management
           </h1>
-          <p className="text-muted-foreground">Update your wedding website content and photo gallery</p>
+          <p className="text-muted-foreground">
+            Update your wedding website content and photo gallery
+          </p>
         </div>
 
         <div className="space-y-8">
@@ -216,7 +223,10 @@ export default function AdminContent() {
               <CardTitle>Our Story Section</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={storyForm.handleSubmit(onUpdateStory)} className="space-y-4">
+              <form
+                onSubmit={storyForm.handleSubmit(onUpdateStory)}
+                className="space-y-4"
+              >
                 <div>
                   <Label htmlFor="storyTitle">Section Title</Label>
                   <Input
@@ -239,7 +249,9 @@ export default function AdminContent() {
                   disabled={updateContentMutation.isPending}
                   data-testid="button-update-story"
                 >
-                  {updateContentMutation.isPending ? "Updating..." : "Update Story"}
+                  {updateContentMutation.isPending
+                    ? "Updating..."
+                    : "Update Story"}
                 </Button>
               </form>
             </CardContent>
@@ -251,7 +263,10 @@ export default function AdminContent() {
               <CardTitle>Venue Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={venueForm.handleSubmit(onUpdateVenue)} className="space-y-4">
+              <form
+                onSubmit={venueForm.handleSubmit(onUpdateVenue)}
+                className="space-y-4"
+              >
                 <div>
                   <Label htmlFor="venueTitle">Section Title</Label>
                   <Input
@@ -274,7 +289,9 @@ export default function AdminContent() {
                   disabled={updateContentMutation.isPending}
                   data-testid="button-update-venue"
                 >
-                  {updateContentMutation.isPending ? "Updating..." : "Update Venue Details"}
+                  {updateContentMutation.isPending
+                    ? "Updating..."
+                    : "Update Venue Details"}
                 </Button>
               </form>
             </CardContent>
@@ -317,14 +334,19 @@ export default function AdminContent() {
                       disabled={uploadGalleryMutation.isPending}
                       data-testid="button-upload-gallery"
                     >
-                      {uploadGalleryMutation.isPending ? "Uploading..." : "Upload Photos"}
+                      {uploadGalleryMutation.isPending
+                        ? "Uploading..."
+                        : "Upload Photos"}
                     </Button>
                   </div>
                 )}
               </div>
 
               {/* Existing Photos */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="gallery-grid">
+              <div
+                className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                data-testid="gallery-grid"
+              >
                 {galleryImages.map((image: any) => (
                   <div key={image.id} className="relative group">
                     <img

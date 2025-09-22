@@ -89,11 +89,6 @@ export default function Home() {
       caption: "Celebrating life together",
     },
     {
-      src: "/images/travel/hike-glacier.jpg",
-      alt: "Hiking adventures",
-      caption: "Exploring glaciers and mountains",
-    },
-    {
       src: "/images/travel/party.jpeg",
       alt: "Party moments",
       caption: "Blurry nights and fun times",

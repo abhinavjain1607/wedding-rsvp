@@ -52,6 +52,7 @@ export const guests = pgTable("guests", {
 
   // Flight and timing details
   flightNumber: varchar("flight_number"),
+  trainNumber: varchar("train_number"),
   pickupDate: varchar("pickup_date"), // Dec 9, 10 or Dec 11
   pickupTime: varchar("pickup_time"), // 6am to 12pm options
   dropoffDate: varchar("dropoff_date"), // Dec 11 or Dec 12 (till afternoon)
@@ -159,6 +160,7 @@ export const insertGuestStep2Schema = createInsertSchema(guests).pick({
   needsTransportDec11: true,
   needsTransportReturn: true,
   flightNumber: true,
+  trainNumber: true,
   pickupDate: true,
   pickupTime: true,
   dropoffDate: true,

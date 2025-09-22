@@ -75,23 +75,6 @@ export default function Navigation() {
                 RSVP
               </Button>
             </Link>
-            {!isAuthenticated ? (
-              <Link href="/login">
-                <Button variant="outline" size="sm" data-testid="nav-admin">
-                  Admin
-                </Button>
-              </Link>
-            ) : (
-              <Link href="/admin">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  data-testid="nav-admin-dashboard"
-                >
-                  Admin Dashboard
-                </Button>
-              </Link>
-            )}
           </div>
 
           {/* Mobile Navigation */}

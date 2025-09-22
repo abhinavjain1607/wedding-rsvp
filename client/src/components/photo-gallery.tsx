@@ -18,7 +18,7 @@ export default function PhotoGallery() {
   // Default images if no custom images are uploaded - mix of family and friendly photos
   const defaultImages = [
     "/images/travel/car-yukon.jpg",
-    "/images/travel/hike-joffrey.jpg",
+    "/images/travel/hike-glacier.jpg",
     "/images/family/cherry-blossom.jpeg",
     "/images/travel/hike-north-cascades.jpg",
     "/images/family/family.jpeg",
