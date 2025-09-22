@@ -75,9 +75,9 @@ export default function Home() {
 
   const adventurePhotos = [
     {
-      src: "/images/travel/mt-rainier.jpg",
+      src: "/images/travel/la-beach.jpeg",
       alt: "Adventures and fun times together",
-      caption: "Hiking Mount Rainier together",
+      caption: "Exploring beaches and cities",
     },
     {
       src: "/images/travel/boat-party.jpg",
@@ -90,9 +90,14 @@ export default function Home() {
       caption: "Exploring glaciers and mountains",
     },
     {
-      src: "/images/travel/sf-rubi-pg.jpg",
+      src: "/images/travel/party.jpeg",
+      alt: "Party moments",
+      caption: "Blurry nights and fun times",
+    },
+    {
+      src: "/images/travel/stanley-park.jpeg",
       alt: "Travel celebrations",
-      caption: "Adventures in San Francisco",
+      caption: "Cycling in Stanley Park",
     },
   ];
 
