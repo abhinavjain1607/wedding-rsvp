@@ -27,7 +27,7 @@ export default function Home() {
   // Check for family-friendly version query parameter
   const urlParams = new URLSearchParams(window.location.search);
   const isFamilyVersion = urlParams.get("t") === "fm";
-  
+
   // Get authentication status
   const { isAuthenticated } = useAuth();
 

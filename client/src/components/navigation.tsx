@@ -83,7 +83,11 @@ export default function Navigation() {
               </Link>
             ) : (
               <Link href="/admin">
-                <Button variant="outline" size="sm" data-testid="nav-admin-dashboard">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  data-testid="nav-admin-dashboard"
+                >
                   Admin Dashboard
                 </Button>
               </Link>
