@@ -4,7 +4,6 @@ import PhotoGallery from "@/components/photo-gallery";
 import { StoryPhotoCarousel } from "@/components/story-photo-carousel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
 import {
   Heart,
   Calendar,
@@ -27,9 +26,6 @@ export default function Home() {
   // Check for family-friendly version query parameter
   const urlParams = new URLSearchParams(window.location.search);
   const isFamilyVersion = urlParams.get("t") === "fm";
-
-  // Get authentication status
-  const { isAuthenticated } = useAuth();
 
   const { data: content = [] } = useQuery<DashboardContent[]>({
     queryKey: ["/api/dashboard-content"],
@@ -225,18 +221,6 @@ export default function Home() {
               >
                 View Details
               </Button>
-              {isAuthenticated && (
-                <Link href="/admin">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="w-52 h-14 border-2 border-white/60 text-white hover:bg-white/20 hover:border-white/80 hover:text-white rounded-full font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-lg tracking-wide backdrop-blur-sm bg-white/10"
-                    data-testid="button-admin"
-                  >
-                    Admin
-                  </Button>
-                </Link>
-              )}
             </div>
           </div>
         </div>
@@ -499,7 +483,7 @@ export default function Home() {
                   Minted Sunshine Haldi
                 </h3>
                 <p className="text-muted-foreground mb-2">
-                  Friday, December 10, 2025
+                  Wednesday, December 10, 2025
                 </p>
                 <p className="text-muted-foreground mb-4">12:00 PM - 3:00 PM</p>
                 <p className="text-sm text-muted-foreground">
@@ -518,7 +502,7 @@ export default function Home() {
                   Jashn-e-Mastani
                 </h3>
                 <p className="text-muted-foreground mb-2">
-                  Friday, December 10, 2025
+                  Wednesday, December 10, 2025
                 </p>
                 <p className="text-muted-foreground mb-4">6:30 PM - 10:00 PM</p>
                 <p className="text-sm text-muted-foreground">
@@ -537,7 +521,7 @@ export default function Home() {
                   Shagna di Shaam
                 </h3>
                 <p className="text-muted-foreground mb-2">
-                  Saturday, December 11, 2025
+                  Thursday, December 11, 2025
                 </p>
                 <p className="text-muted-foreground mb-4">2:00 PM - 6:00 PM</p>
                 <p className="text-sm text-muted-foreground">
