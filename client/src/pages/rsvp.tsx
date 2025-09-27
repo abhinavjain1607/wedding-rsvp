@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -79,6 +79,7 @@ export default function RSVP() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentGuestId, setCurrentGuestId] = useState<string | null>(null);
   const [guestData, setGuestData] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -231,6 +232,7 @@ export default function RSVP() {
 
       if (data.idDocument) {
         formData.append("idDocument", data.idDocument);
+        formData.append("originalFilename", data.idDocument.name);
       }
       formData.append("step2Completed", "true");
 
@@ -244,6 +246,11 @@ export default function RSVP() {
     },
     onSuccess: () => {
       setCurrentFlow("complete");
+      // Clear the selected file and reset file input
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       toast({
         title: "Perfect! All set! 🎉",
         description:
@@ -818,8 +825,38 @@ export default function RSVP() {
                       >
                         Upload ID Document
                       </Label>
+
+                      {/* Display previously uploaded document if it exists */}
+                      {guestData?.idUploadUrl && (
+                        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-green-900">
+                                ID Document Uploaded
+                              </p>
+                              <p className="text-xs text-green-700 mb-2">
+                                {guestData.idDocumentType
+                                  ?.replace("_", " ")
+                                  .toUpperCase()}{" "}
+                                document
+                              </p>
+                              <a
+                                href={guestData.idUploadUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-green-600 hover:text-green-800 underline"
+                              >
+                                View uploaded document →
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="border-2 border-dashed border-input rounded-lg p-6 text-center hover:border-pink-300 transition-colors">
                         <input
+                          ref={fileInputRef}
                           type="file"
                           id="idUpload"
                           accept=".pdf,.jpg,.jpeg,.png"
@@ -831,6 +868,8 @@ export default function RSVP() {
                           <p className="text-muted-foreground">
                             {selectedFile
                               ? selectedFile.name
+                              : guestData?.idUploadUrl
+                              ? "Click to replace your ID document"
                               : "Click to upload your ID document"}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">

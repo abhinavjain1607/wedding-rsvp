@@ -11,6 +11,7 @@ import {
   insertGalleryImageSchema,
 } from "@shared/schema";
 import multer from "multer";
+import { uploadFileToGCS } from "./gcs";
 import path from "path";
 import fs from "fs";
 import { randomUUID } from "crypto";
@@ -603,9 +604,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { id } = req.params;
 
-        // Log the raw request body for debugging
-        console.log("Raw req.body:", req.body);
-
         // Convert string boolean values from FormData to actual booleans
         const processedBody = { ...req.body };
 
@@ -662,8 +660,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Handle file upload if present
         if (req.file) {
-          const fileUrl = `/uploads/${req.file.filename}`;
-          guestData.idUploadUrl = fileUrl;
+          try {
+            // Upload to GCS and get public URL using original filename from form data
+            const originalFilename =
+              req.body.originalFilename || req.file.originalname;
+            const ext = path.extname(originalFilename);
+            const baseName = path.basename(originalFilename, ext);
+            const timestamp = Date.now();
+            const gcsFileName = `rsvp/${baseName}_${timestamp}${ext}`;
+            const localFilePath = req.file.path;
+            const gcsUrl = await uploadFileToGCS(localFilePath, gcsFileName);
+            guestData.idUploadUrl = gcsUrl;
+          } catch (uploadError) {
+            console.error("GCS upload failed:", uploadError);
+            // Continue without the file URL - don't fail the entire request
+          }
         }
 
         const guest = await storage.updateGuest(id, {
@@ -715,8 +726,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle file upload if present
       if (req.file) {
-        const fileUrl = `/uploads/${req.file.filename}`;
-        guestData.idUploadUrl = fileUrl;
+        // Upload to GCS and get public URL
+        const ext = path.extname(req.file.originalname);
+        const gcsFileName = `${req.file.filename}${ext}`;
+        const localFilePath = req.file.path;
+        const gcsUrl = await uploadFileToGCS(localFilePath, gcsFileName);
+        guestData.idUploadUrl = gcsUrl;
       }
 
       const guest = await storage.createGuest(guestData);
@@ -759,8 +774,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle file upload if present
       if (req.file) {
-        const fileUrl = `/uploads/${req.file.filename}`;
-        guestData.idUploadUrl = fileUrl;
+        // Upload to GCS and get public URL
+        const ext = path.extname(req.file.originalname);
+        const gcsFileName = `${req.file.filename}${ext}`;
+        const localFilePath = req.file.path;
+        const gcsUrl = await uploadFileToGCS(localFilePath, gcsFileName);
+        guestData.idUploadUrl = gcsUrl;
       }
 
       const guest = await storage.updateGuest(id, guestData);
@@ -783,9 +802,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const uploadedImages = [];
         for (const file of req.files) {
-          const imageUrl = `/uploads/${file.filename}`;
+          // Upload to GCS and get public URL using original filename
+          const ext = path.extname(file.originalname);
+          const baseName = path.basename(file.originalname, ext);
+          const timestamp = Date.now();
+          const gcsFileName = `gallery/${baseName}_${timestamp}${ext}`;
+          const localFilePath = file.path;
+          const gcsUrl = await uploadFileToGCS(localFilePath, gcsFileName);
+
           const image = await storage.createGalleryImage({
-            imageUrl,
+            imageUrl: gcsUrl,
             caption: req.body.caption || "",
             uploadedBy: req.body.uploadedBy || "guest",
           });
@@ -976,9 +1002,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const uploadedImages = [];
         for (const file of req.files) {
-          const imageUrl = `/uploads/${file.filename}`;
+          // Upload to GCS and get public URL using original filename
+          const ext = path.extname(file.originalname);
+          const baseName = path.basename(file.originalname, ext);
+          const timestamp = Date.now();
+          const gcsFileName = `gallery/${baseName}_${timestamp}${ext}`;
+          const localFilePath = file.path;
+          const gcsUrl = await uploadFileToGCS(localFilePath, gcsFileName);
+
           const image = await storage.createGalleryImage({
-            imageUrl,
+            imageUrl: gcsUrl,
             caption: req.body.caption || "",
             uploadedBy: "admin",
           });
