@@ -805,7 +805,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/uploads",
     (req, res, next) => {
       // Basic security check
-      const filePath = path.join(uploadDir, req.path);
+      const filePath = path.resolve(uploadDir, "." + req.path);
       if (!filePath.startsWith(uploadDir)) {
         return res.status(403).json({ message: "Access denied" });
       }
