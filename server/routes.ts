@@ -623,6 +623,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // New transport field names
+        if (processedBody.needsTransportPickup !== undefined) {
+          processedBody.needsTransportPickup =
+            processedBody.needsTransportPickup === "true";
+        }
         if (processedBody.needsTransportDec9 !== undefined) {
           processedBody.needsTransportDec9 =
             processedBody.needsTransportDec9 === "true";
@@ -645,8 +649,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "flightNumber",
           "pickupDate",
           "pickupTime",
+          "pickupLocation",
           "dropoffDate",
           "dropoffTime",
+          "dropoffLocation",
           "additionalNotes",
         ].forEach((field) => {
           if (processedBody[field] === "") {

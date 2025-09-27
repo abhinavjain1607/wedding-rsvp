@@ -1,0 +1,1 @@
+ALTER TABLE "guests" ADD COLUMN "needs_transport_pickup" boolean DEFAULT false;

@@ -12,6 +12,8 @@ import {
   Car,
   Train,
   Users,
+  Sun,
+  Music,
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -477,7 +479,7 @@ export default function Home() {
             <Card className="text-center" data-testid="card-haldi">
               <CardContent className="p-8">
                 <div className="w-16 h-16 bg-primary/10 rounded-full mx-auto mb-6 flex items-center justify-center">
-                  <Calendar className="w-8 h-8 text-primary" />
+                  <Sun className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="font-serif text-xl font-semibold mb-4 text-foreground">
                   Minted Sunshine Haldi
@@ -496,7 +498,7 @@ export default function Home() {
             <Card className="text-center" data-testid="card-sangeet">
               <CardContent className="p-8">
                 <div className="w-16 h-16 bg-primary/10 rounded-full mx-auto mb-6 flex items-center justify-center">
-                  <Heart className="w-8 h-8 text-primary" />
+                  <Music className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="font-serif text-xl font-semibold mb-4 text-foreground">
                   Jashn-e-Mastani
@@ -515,17 +517,24 @@ export default function Home() {
             <Card className="text-center" data-testid="card-wedding">
               <CardContent className="p-8">
                 <div className="w-16 h-16 bg-primary/10 rounded-full mx-auto mb-6 flex items-center justify-center">
-                  <Users className="w-8 h-8 text-primary" />
+                  <Heart className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="font-serif text-xl font-semibold mb-4 text-foreground">
                   Shagna di Shaam
                 </h3>
-                <p className="text-muted-foreground mb-2">
+                <p className="text-muted-foreground mb-4">
                   Thursday, December 11, 2025
                 </p>
-                <p className="text-muted-foreground mb-4">2:00 PM - 6:00 PM</p>
+                <div className="space-y-1 mb-4">
+                  <div className="bg-primary/10 text-muted-foreground font-medium px-3 py-1 rounded-lg text-center">
+                    Baarat 3:00 PM
+                  </div>
+                  <div className="bg-accent/10 text-muted-foreground font-medium px-3 py-1 rounded-lg text-center">
+                    Pheras 4:30 PM
+                  </div>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  Pheras with Lunch, Snacks & Dinner
+                  Followed by Dinner
                 </p>
               </CardContent>
             </Card>
@@ -600,16 +609,16 @@ export default function Home() {
               <h3 className="font-serif text-2xl font-semibold mb-6 text-center text-foreground">
                 Transportation
               </h3>
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-2 gap-6">
                 <div className="text-center">
                   <div className="w-12 h-12 bg-secondary/10 rounded-full mx-auto mb-4 flex items-center justify-center">
                     <Plane className="w-6 h-6 text-secondary" />
                   </div>
                   <h4 className="font-semibold text-foreground mb-2">
-                    Shuttle Service
+                    Complimentary Cab Service
                   </h4>
                   <p className="text-sm text-muted-foreground">
-                    Complimentary shuttles from Milan Malpensa Airport
+                    Available from Udaipur Airport and Railway station
                   </p>
                 </div>
                 <div className="text-center">
@@ -621,17 +630,6 @@ export default function Home() {
                   </h4>
                   <p className="text-sm text-muted-foreground">
                     Limited parking available at venue
-                  </p>
-                </div>
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-secondary/10 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <Train className="w-6 h-6 text-secondary" />
-                  </div>
-                  <h4 className="font-semibold text-foreground mb-2">
-                    Local Transport
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Ferry service available from Bellagio and Como
                   </p>
                 </div>
               </div>

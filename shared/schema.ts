@@ -45,18 +45,22 @@ export const guests = pgTable("guests", {
   transportMode: varchar("transport_mode"), // flight, train, driving, bus, other
 
   // Transport service requirements
+  needsTransportPickup: boolean("needs_transport_pickup").default(false),
+  needsTransportReturn: boolean("needs_transport_return").default(false),
+  // Legacy fields for backward compatibility
   needsTransportDec9: boolean("needs_transport_dec9").default(false),
   needsTransportDec10: boolean("needs_transport_dec10").default(false),
   needsTransportDec11: boolean("needs_transport_dec11").default(false),
-  needsTransportReturn: boolean("needs_transport_return").default(false),
 
   // Flight and timing details
   flightNumber: varchar("flight_number"),
   trainNumber: varchar("train_number"),
   pickupDate: varchar("pickup_date"), // Dec 9, 10 or Dec 11
   pickupTime: varchar("pickup_time"), // 6am to 12pm options
+  pickupLocation: varchar("pickup_location"), // exact pickup location
   dropoffDate: varchar("dropoff_date"), // Dec 11 or Dec 12 (till afternoon)
   dropoffTime: varchar("dropoff_time"), // till 2pm on Dec 12
+  dropoffLocation: varchar("dropoff_location"), // exact dropoff location
 
   // Additional information
   additionalNotes: text("additional_notes"),
@@ -155,17 +159,21 @@ export const insertGuestStep2Schema = createInsertSchema(guests).pick({
   idDocumentType: true,
   idUploadUrl: true,
   transportMode: true,
-  needsTransportDec9: true,
-  needsTransportDec10: true,
-  needsTransportDec11: true,
+  needsTransportPickup: true,
   needsTransportReturn: true,
   flightNumber: true,
   trainNumber: true,
   pickupDate: true,
   pickupTime: true,
+  pickupLocation: true,
   dropoffDate: true,
   dropoffTime: true,
+  dropoffLocation: true,
   additionalNotes: true,
+  // Legacy fields for backward compatibility
+  needsTransportDec9: true,
+  needsTransportDec10: true,
+  needsTransportDec11: true,
 });
 
 // Update/find guest schema

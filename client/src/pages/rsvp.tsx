@@ -42,26 +42,65 @@ const step1Schema = z.object({
   rsvpStatus: z.enum(["attending", "tentative", "declined"]),
 });
 
-const step2Schema = z.object({
-  idDocumentType: z.enum(
-    ["aadhar", "pan", "passport", "voter_id", "drivers_license"],
+const step2Schema = z
+  .object({
+    transportMode: z.string().optional(),
+    needsTransportPickup: z.boolean(),
+    needsTransportReturn: z.boolean(),
+    flightNumber: z.string().optional(),
+    trainNumber: z.string().optional(),
+    pickupDate: z.string().optional(),
+    pickupTime: z.string().optional(),
+    pickupLocation: z.string().optional(),
+    dropoffDate: z.string().optional(),
+    dropoffTime: z.string().optional(),
+    dropoffLocation: z.string().optional(),
+    additionalNotes: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // Validate pickup location if pickup is selected
+      if (data.needsTransportPickup && !data.pickupLocation?.trim()) {
+        return false;
+      }
+      return true;
+    },
     {
-      required_error: "Please select a valid ID type",
+      message: "Pickup location is required when pickup service is selected",
+      path: ["pickupLocation"],
     }
-  ),
-  transportMode: z.string().min(1, "Please select your mode of transport"),
-  needsTransportDec9: z.boolean(),
-  needsTransportDec10: z.boolean(),
-  needsTransportDec11: z.boolean(),
-  needsTransportReturn: z.boolean(),
-  flightNumber: z.string().optional(),
-  trainNumber: z.string().optional(),
-  pickupDate: z.string().optional(),
-  pickupTime: z.string().optional(),
-  dropoffDate: z.string().optional(),
-  dropoffTime: z.string().optional(),
-  additionalNotes: z.string().optional(),
-});
+  )
+  .refine(
+    (data) => {
+      // Validate dropoff location if dropoff is selected
+      if (data.needsTransportReturn && !data.dropoffLocation?.trim()) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Dropoff location is required when dropoff service is selected",
+      path: ["dropoffLocation"],
+    }
+  )
+  .refine(
+    (data) => {
+      // If dropoff is needed and date is December 12th, time must be before 12:00 PM
+      if (
+        data.needsTransportReturn &&
+        data.dropoffDate === "dec12" &&
+        data.dropoffTime
+      ) {
+        const [hours] = data.dropoffTime.split(":").map(Number);
+        return hours < 12;
+      }
+      return true;
+    },
+    {
+      message: "Dropoff time on December 12th must be before 12:00 PM",
+      path: ["dropoffTime"],
+    }
+  );
 
 const findGuestSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -79,6 +118,8 @@ export default function RSVP() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentGuestId, setCurrentGuestId] = useState<string | null>(null);
   const [guestData, setGuestData] = useState<any>(null);
+  const [needsTransportService, setNeedsTransportService] =
+    useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -90,9 +131,7 @@ export default function RSVP() {
   const step2Form = useForm<Step2FormData>({
     resolver: zodResolver(step2Schema),
     defaultValues: {
-      needsTransportDec9: false,
-      needsTransportDec10: false,
-      needsTransportDec11: false,
+      needsTransportPickup: false,
       needsTransportReturn: false,
       trainNumber: "",
     },
@@ -293,21 +332,48 @@ export default function RSVP() {
 
       // Pre-fill step2 form if it was completed (for future use if they change to attending)
       if (guest.step2Completed) {
+        const hasTransportPickup =
+          guest.needsTransportPickup || // Check new unified field first
+          guest.needsTransportDec9 ||
+          guest.needsTransportDec10 ||
+          guest.needsTransportDec11 ||
+          false;
+        const hasTransportReturn = guest.needsTransportReturn || false;
+
+        console.log("Guest transport data:", {
+          needsTransportPickup: guest.needsTransportPickup,
+          needsTransportDec9: guest.needsTransportDec9,
+          needsTransportDec10: guest.needsTransportDec10,
+          needsTransportDec11: guest.needsTransportDec11,
+          needsTransportReturn: guest.needsTransportReturn,
+          hasTransportPickup,
+          hasTransportReturn,
+        });
+
         step2Form.reset({
-          idDocumentType: guest.idDocumentType,
           transportMode: guest.transportMode || "",
-          needsTransportDec9: guest.needsTransportDec9 || false,
-          needsTransportDec10: guest.needsTransportDec10 || false,
-          needsTransportDec11: guest.needsTransportDec11 || false,
-          needsTransportReturn: guest.needsTransportReturn || false,
+          needsTransportPickup: hasTransportPickup,
+          needsTransportReturn: hasTransportReturn,
           flightNumber: guest.flightNumber || "",
           trainNumber: guest.trainNumber || "",
           pickupDate: guest.pickupDate || "",
           pickupTime: guest.pickupTime || "",
+          pickupLocation: guest.pickupLocation || "",
           dropoffDate: guest.dropoffDate || "",
           dropoffTime: guest.dropoffTime || "",
+          dropoffLocation: guest.dropoffLocation || "",
           additionalNotes: guest.additionalNotes || "",
         });
+
+        // Enable transport service section if they previously selected any transport
+        if (hasTransportPickup || hasTransportReturn) {
+          console.log("Setting needsTransportService to true");
+          setNeedsTransportService(true);
+        } else {
+          console.log(
+            "Not setting needsTransportService - no transport selected"
+          );
+        }
       } // Always start from step1 so users can update their RSVP status
       setCurrentFlow("step1");
 
@@ -339,6 +405,26 @@ export default function RSVP() {
 
   const onStep2Submit = (data: Step2FormData) => {
     console.log("Step 2 form submit triggered with data:", data);
+
+    // Validate that a file has been selected
+    if (!selectedFile && !guestData?.idUploadUrl) {
+      toast({
+        title: "ID Document Required",
+        description: "Please upload a valid ID document to complete your RSVP.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate transport mode if transport service is needed
+    if (needsTransportService && !data.transportMode) {
+      toast({
+        title: "Transport Mode Required",
+        description: "Please select how you will be traveling.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Get all current form values to ensure we have everything
     const allFormValues = step2Form.getValues();
@@ -791,40 +877,16 @@ export default function RSVP() {
                     </div>
 
                     <div>
-                      <Label htmlFor="idDocumentType">ID Type *</Label>
-                      <Select
-                        onValueChange={(value) =>
-                          step2Form.setValue("idDocumentType", value as any)
-                        }
-                        defaultValue={step2Form.getValues("idDocumentType")}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Select your ID type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="aadhar">Aadhar Card</SelectItem>
-                          <SelectItem value="pan">PAN Card</SelectItem>
-                          <SelectItem value="passport">Passport</SelectItem>
-                          <SelectItem value="voter_id">Voter ID</SelectItem>
-                          <SelectItem value="drivers_license">
-                            Driver's License
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {step2Form.formState.errors.idDocumentType && (
-                        <p className="text-sm text-destructive mt-1">
-                          {step2Form.formState.errors.idDocumentType.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
                       <Label
                         htmlFor="idUpload"
                         className="block text-sm font-medium mb-2"
                       >
-                        Upload ID Document
+                        Upload ID Document *
                       </Label>
+                      <p className="text-sm text-muted-foreground mt-2 py-1">
+                        All guests staying at the hotel will need to upload
+                        their valid ID documents for check-in purposes.
+                      </p>
 
                       {/* Display previously uploaded document if it exists */}
                       {guestData?.idUploadUrl && (
@@ -836,10 +898,7 @@ export default function RSVP() {
                                 ID Document Uploaded
                               </p>
                               <p className="text-xs text-green-700 mb-2">
-                                {guestData.idDocumentType
-                                  ?.replace("_", " ")
-                                  .toUpperCase()}{" "}
-                                document
+                                Valid ID document for hotel check-in
                               </p>
                               <a
                                 href={guestData.idUploadUrl}
@@ -869,8 +928,8 @@ export default function RSVP() {
                             {selectedFile
                               ? selectedFile.name
                               : guestData?.idUploadUrl
-                              ? "Click to replace your ID document"
-                              : "Click to upload your ID document"}
+                              ? "Click to replace your ID document (required)"
+                              : "Click to upload your ID document (required)"}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
                             PDF, JPG, PNG up to 10MB
@@ -891,7 +950,8 @@ export default function RSVP() {
 
                     <div>
                       <Label htmlFor="transportMode">
-                        How will you be traveling? *
+                        How will you be traveling?{" "}
+                        {needsTransportService ? "*" : "(optional)"}
                       </Label>
                       <Select
                         onValueChange={(value) =>
@@ -947,452 +1007,235 @@ export default function RSVP() {
                     )}
                   </div>
 
-                  {/* Transport Service Section */}
+                  {/* Transport Service Checkbox */}
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Calendar className="w-5 h-5 text-pink-500" />
-                      <h3 className="text-lg font-semibold">
-                        Complimentary Transport Service
-                      </h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      We provide complimentary transport service from airports
-                      and railway stations. Service available: 6:00 AM - 12:00
-                      PM
-                    </p>
-
-                    {/* Important Information - moved up */}
-                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-start space-x-2">
-                        <svg
-                          className="w-5 h-5 text-blue-500 mt-0.5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
+                    <div className="flex items-center space-x-3 p-4 border border-input rounded-lg">
+                      <input
+                        type="checkbox"
+                        id="needsTransportService"
+                        checked={needsTransportService}
+                        onChange={(e) =>
+                          setNeedsTransportService(e.target.checked)
+                        }
+                        className="rounded"
+                      />
+                      <div className="flex-1">
+                        <Label
+                          htmlFor="needsTransportService"
+                          className="font-medium cursor-pointer"
                         >
-                          <path
-                            fillRule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <div>
-                          <h4 className="text-sm font-medium text-blue-900 mb-2">
-                            Important Information
-                          </h4>
-                          <p className="text-sm text-blue-800">
-                            <strong>Drop off dates:</strong> 11th (till 10:00
-                            PM) and 12th December (till 12:00 PM)
-                            <br />
-                            <strong>Check-in time:</strong> 12:00 PM (We can
-                            accommodate early check-ins as well)
-                            <br />
-                            <strong>Check-out time:</strong> 11:00 AM on 12th
-                            December
-                          </p>
-                        </div>
+                          Do you need pickup or drop-off transportation service?
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          We provide complimentary transport from Udaipur
+                          Airport and Railway station
+                        </p>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="space-y-3">
-                      {/* December 9th pickup option - temporarily hidden */}
-                      {false && (
+                  {/* Transport Service Section */}
+                  {needsTransportService && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Calendar className="w-5 h-5 text-pink-500" />
+                        <h3 className="text-lg font-semibold">
+                          Transportation
+                        </h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        We provide complimentary transport service from airports
+                        and railway stations.
+                      </p>
+
+                      {/* Important Information - moved up */}
+                      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-start space-x-2">
+                          <svg
+                            className="w-5 h-5 text-blue-500 mt-0.5"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <div>
+                            <h4 className="text-sm font-medium text-blue-900 mb-2">
+                              Important Information
+                            </h4>
+                            <p className="text-sm text-blue-800">
+                              <strong>Drop off dates:</strong> 11th (till 10:00
+                              PM) and 12th December (till 12:00 PM)
+                              <br />
+                              <strong>Check-in time:</strong> 12:00 PM (We can
+                              accommodate early check-ins as well)
+                              <br />
+                              <strong>Check-out time:</strong> 11:00 AM on 12th
+                              December
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
                         <div className="flex items-center space-x-3 p-4 border border-input rounded-lg">
                           <input
                             type="checkbox"
-                            id="needsTransportDec9"
-                            {...step2Form.register("needsTransportDec9")}
+                            id="needsTransportPickup"
+                            {...step2Form.register("needsTransportPickup")}
                             className="rounded"
                           />
                           <div className="flex-1">
                             <Label
-                              htmlFor="needsTransportDec9"
+                              htmlFor="needsTransportPickup"
                               className="font-medium cursor-pointer"
                             >
-                              Pickup on December 9th
+                              Pickup
                             </Label>
                             <p className="text-sm text-muted-foreground">
                               Airport/station pickup service for guest arrivals
-                              (6:00 AM - 10:00 PM)
                             </p>
                           </div>
                         </div>
-                      )}
 
-                      <div className="flex items-center space-x-3 p-4 border border-input rounded-lg">
-                        <input
-                          type="checkbox"
-                          id="needsTransportDec10"
-                          {...step2Form.register("needsTransportDec10")}
-                          className="rounded"
-                        />
-                        <div className="flex-1">
-                          <Label
-                            htmlFor="needsTransportDec10"
-                            className="font-medium cursor-pointer"
-                          >
-                            Pickup on December 10th
-                          </Label>
-                          <p className="text-sm text-muted-foreground">
-                            Airport/station pickup service for guest arrivals
-                            (6:00 AM - 10:00 PM)
-                          </p>
+                        <div className="flex items-center space-x-3 p-4 border border-input rounded-lg">
+                          <input
+                            type="checkbox"
+                            id="needsTransportReturn"
+                            {...step2Form.register("needsTransportReturn")}
+                            className="rounded"
+                          />
+                          <div className="flex-1">
+                            <Label
+                              htmlFor="needsTransportReturn"
+                              className="font-medium cursor-pointer"
+                            >
+                              Drop Off
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              Drop off service to airport/station (available
+                              till 12:00 PM on Dec 12th)
+                            </p>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-3 p-4 border border-input rounded-lg">
-                        <input
-                          type="checkbox"
-                          id="needsTransportDec11"
-                          {...step2Form.register("needsTransportDec11")}
-                          className="rounded"
-                        />
-                        <div className="flex-1">
-                          <Label
-                            htmlFor="needsTransportDec11"
-                            className="font-medium cursor-pointer"
-                          >
-                            Pickup on December 11th
-                          </Label>
-                          <p className="text-sm text-muted-foreground">
-                            Airport/station pickup service for guest arrivals
-                            (6:00 AM - 10:00 PM)
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3 p-4 border border-input rounded-lg">
-                        <input
-                          type="checkbox"
-                          id="needsTransportReturn"
-                          {...step2Form.register("needsTransportReturn")}
-                          className="rounded"
-                        />
-                        <div className="flex-1">
-                          <Label
-                            htmlFor="needsTransportReturn"
-                            className="font-medium cursor-pointer"
-                          >
-                            Return Transport Service
-                          </Label>
-                          <p className="text-sm text-muted-foreground">
-                            Return transport service to airport/station
-                            (available till 12:00 PM on Dec 12th)
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Time Selection */}
-                    {(step2Form.watch("needsTransportDec9") ||
-                      step2Form.watch("needsTransportDec10") ||
-                      step2Form.watch("needsTransportDec11") ||
-                      step2Form.watch("needsTransportReturn")) && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 p-4 bg-pink-50 rounded-lg">
-                        {(step2Form.watch("needsTransportDec9") ||
-                          step2Form.watch("needsTransportDec10") ||
-                          step2Form.watch("needsTransportDec11")) && (
-                          <>
-                            <div>
-                              <Label htmlFor="pickupDate">Pickup Date</Label>
-                              <Select
-                                onValueChange={(value) =>
-                                  step2Form.setValue("pickupDate", value)
-                                }
-                                defaultValue={step2Form.getValues("pickupDate")}
-                              >
-                                <SelectTrigger className="mt-1">
-                                  <SelectValue placeholder="Select date" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {step2Form.watch("needsTransportDec9") && (
-                                    <SelectItem value="dec9">
-                                      December 9th
-                                    </SelectItem>
+                      {/* Time Selection */}
+                      {(step2Form.watch("needsTransportPickup") ||
+                        step2Form.watch("needsTransportReturn")) && (
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 p-4 bg-pink-50 rounded-lg">
+                          {step2Form.watch("needsTransportPickup") && (
+                            <>
+                              <div>
+                                <Label htmlFor="pickupDate">Pickup Date</Label>
+                                <Select
+                                  onValueChange={(value) =>
+                                    step2Form.setValue("pickupDate", value)
+                                  }
+                                  defaultValue={step2Form.getValues(
+                                    "pickupDate"
                                   )}
-                                  {step2Form.watch("needsTransportDec10") && (
+                                >
+                                  <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Select date" />
+                                  </SelectTrigger>
+                                  <SelectContent>
                                     <SelectItem value="dec10">
                                       December 10th
                                     </SelectItem>
-                                  )}
-                                  {step2Form.watch("needsTransportDec11") && (
                                     <SelectItem value="dec11">
                                       December 11th
                                     </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div>
+                                <Label htmlFor="pickupTime">Pickup Time</Label>
+                                <Input
+                                  id="pickupTime"
+                                  type="time"
+                                  placeholder="e.g., 14:30"
+                                  {...step2Form.register("pickupTime")}
+                                  className="mt-1"
+                                />
+                              </div>
+
+                              <div className="md:col-span-2">
+                                <Label htmlFor="pickupLocation">
+                                  Exact Pickup Location
+                                </Label>
+                                <Input
+                                  id="pickupLocation"
+                                  placeholder="e.g., Maharana Pratap Railway Station"
+                                  {...step2Form.register("pickupLocation")}
+                                  className="mt-1"
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          {step2Form.watch("needsTransportReturn") && (
+                            <>
+                              <div>
+                                <Label htmlFor="dropoffDate">
+                                  Dropoff Date
+                                </Label>
+                                <Select
+                                  onValueChange={(value) =>
+                                    step2Form.setValue("dropoffDate", value)
+                                  }
+                                  defaultValue={step2Form.getValues(
+                                    "dropoffDate"
                                   )}
-                                </SelectContent>
-                              </Select>
-                            </div>
+                                >
+                                  <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Select date" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="dec11">
+                                      December 11th
+                                    </SelectItem>
+                                    <SelectItem value="dec12">
+                                      December 12th
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
 
-                            <div>
-                              <Label htmlFor="pickupTime">Pickup Time</Label>
-                              <Select
-                                onValueChange={(value) =>
-                                  step2Form.setValue("pickupTime", value)
-                                }
-                                defaultValue={step2Form.getValues("pickupTime")}
-                              >
-                                <SelectTrigger className="mt-1">
-                                  <SelectValue placeholder="Select time" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="6:00am">
-                                    6:00 AM
-                                  </SelectItem>
-                                  <SelectItem value="6:30am">
-                                    6:30 AM
-                                  </SelectItem>
-                                  <SelectItem value="7:00am">
-                                    7:00 AM
-                                  </SelectItem>
-                                  <SelectItem value="7:30am">
-                                    7:30 AM
-                                  </SelectItem>
-                                  <SelectItem value="8:00am">
-                                    8:00 AM
-                                  </SelectItem>
-                                  <SelectItem value="8:30am">
-                                    8:30 AM
-                                  </SelectItem>
-                                  <SelectItem value="9:00am">
-                                    9:00 AM
-                                  </SelectItem>
-                                  <SelectItem value="9:30am">
-                                    9:30 AM
-                                  </SelectItem>
-                                  <SelectItem value="10:00am">
-                                    10:00 AM
-                                  </SelectItem>
-                                  <SelectItem value="10:30am">
-                                    10:30 AM
-                                  </SelectItem>
-                                  <SelectItem value="11:00am">
-                                    11:00 AM
-                                  </SelectItem>
-                                  <SelectItem value="11:30am">
-                                    11:30 AM
-                                  </SelectItem>
-                                  <SelectItem value="12:00pm">
-                                    12:00 PM
-                                  </SelectItem>
-                                  <SelectItem value="12:30pm">
-                                    12:30 PM
-                                  </SelectItem>
-                                  <SelectItem value="1:00pm">
-                                    1:00 PM
-                                  </SelectItem>
-                                  <SelectItem value="1:30pm">
-                                    1:30 PM
-                                  </SelectItem>
-                                  <SelectItem value="2:00pm">
-                                    2:00 PM
-                                  </SelectItem>
-                                  <SelectItem value="2:30pm">
-                                    2:30 PM
-                                  </SelectItem>
-                                  <SelectItem value="3:00pm">
-                                    3:00 PM
-                                  </SelectItem>
-                                  <SelectItem value="3:30pm">
-                                    3:30 PM
-                                  </SelectItem>
-                                  <SelectItem value="4:00pm">
-                                    4:00 PM
-                                  </SelectItem>
-                                  <SelectItem value="4:30pm">
-                                    4:30 PM
-                                  </SelectItem>
-                                  <SelectItem value="5:00pm">
-                                    5:00 PM
-                                  </SelectItem>
-                                  <SelectItem value="5:30pm">
-                                    5:30 PM
-                                  </SelectItem>
-                                  <SelectItem value="6:00pm">
-                                    6:00 PM
-                                  </SelectItem>
-                                  <SelectItem value="6:30pm">
-                                    6:30 PM
-                                  </SelectItem>
-                                  <SelectItem value="7:00pm">
-                                    7:00 PM
-                                  </SelectItem>
-                                  <SelectItem value="7:30pm">
-                                    7:30 PM
-                                  </SelectItem>
-                                  <SelectItem value="8:00pm">
-                                    8:00 PM
-                                  </SelectItem>
-                                  <SelectItem value="8:30pm">
-                                    8:30 PM
-                                  </SelectItem>
-                                  <SelectItem value="9:00pm">
-                                    9:00 PM
-                                  </SelectItem>
-                                  <SelectItem value="9:30pm">
-                                    9:30 PM
-                                  </SelectItem>
-                                  <SelectItem value="10:00pm">
-                                    10:00 PM
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </>
-                        )}
+                              <div>
+                                <Label htmlFor="dropoffTime">
+                                  Dropoff Time
+                                </Label>
+                                <Input
+                                  id="dropoffTime"
+                                  type="time"
+                                  placeholder="e.g., 16:30"
+                                  {...step2Form.register("dropoffTime")}
+                                  className="mt-1"
+                                />
+                              </div>
 
-                        {step2Form.watch("needsTransportReturn") && (
-                          <>
-                            <div>
-                              <Label htmlFor="dropoffDate">Dropoff Date</Label>
-                              <Select
-                                onValueChange={(value) =>
-                                  step2Form.setValue("dropoffDate", value)
-                                }
-                                defaultValue={step2Form.getValues(
-                                  "dropoffDate"
-                                )}
-                              >
-                                <SelectTrigger className="mt-1">
-                                  <SelectValue placeholder="Select date" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="dec11">
-                                    December 11th
-                                  </SelectItem>
-                                  <SelectItem value="dec12">
-                                    December 12th
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div>
-                              <Label htmlFor="dropoffTime">Dropoff Time</Label>
-                              <Select
-                                onValueChange={(value) =>
-                                  step2Form.setValue("dropoffTime", value)
-                                }
-                                defaultValue={step2Form.getValues(
-                                  "dropoffTime"
-                                )}
-                              >
-                                <SelectTrigger className="mt-1">
-                                  <SelectValue placeholder="Select time" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="6:00am">
-                                    6:00 AM
-                                  </SelectItem>
-                                  <SelectItem value="6:30am">
-                                    6:30 AM
-                                  </SelectItem>
-                                  <SelectItem value="7:00am">
-                                    7:00 AM
-                                  </SelectItem>
-                                  <SelectItem value="7:30am">
-                                    7:30 AM
-                                  </SelectItem>
-                                  <SelectItem value="8:00am">
-                                    8:00 AM
-                                  </SelectItem>
-                                  <SelectItem value="8:30am">
-                                    8:30 AM
-                                  </SelectItem>
-                                  <SelectItem value="9:00am">
-                                    9:00 AM
-                                  </SelectItem>
-                                  <SelectItem value="9:30am">
-                                    9:30 AM
-                                  </SelectItem>
-                                  <SelectItem value="10:00am">
-                                    10:00 AM
-                                  </SelectItem>
-                                  <SelectItem value="10:30am">
-                                    10:30 AM
-                                  </SelectItem>
-                                  <SelectItem value="11:00am">
-                                    11:00 AM
-                                  </SelectItem>
-                                  <SelectItem value="11:30am">
-                                    11:30 AM
-                                  </SelectItem>
-                                  <SelectItem value="12:00pm">
-                                    12:00 PM
-                                  </SelectItem>
-                                  {/* Extended hours for December 11th */}
-                                  {step2Form.watch("dropoffDate") ===
-                                    "dec11" && (
-                                    <>
-                                      <SelectItem value="12:30pm">
-                                        12:30 PM
-                                      </SelectItem>
-                                      <SelectItem value="1:00pm">
-                                        1:00 PM
-                                      </SelectItem>
-                                      <SelectItem value="1:30pm">
-                                        1:30 PM
-                                      </SelectItem>
-                                      <SelectItem value="2:00pm">
-                                        2:00 PM
-                                      </SelectItem>
-                                      <SelectItem value="2:30pm">
-                                        2:30 PM
-                                      </SelectItem>
-                                      <SelectItem value="3:00pm">
-                                        3:00 PM
-                                      </SelectItem>
-                                      <SelectItem value="3:30pm">
-                                        3:30 PM
-                                      </SelectItem>
-                                      <SelectItem value="4:00pm">
-                                        4:00 PM
-                                      </SelectItem>
-                                      <SelectItem value="4:30pm">
-                                        4:30 PM
-                                      </SelectItem>
-                                      <SelectItem value="5:00pm">
-                                        5:00 PM
-                                      </SelectItem>
-                                      <SelectItem value="5:30pm">
-                                        5:30 PM
-                                      </SelectItem>
-                                      <SelectItem value="6:00pm">
-                                        6:00 PM
-                                      </SelectItem>
-                                      <SelectItem value="6:30pm">
-                                        6:30 PM
-                                      </SelectItem>
-                                      <SelectItem value="7:00pm">
-                                        7:00 PM
-                                      </SelectItem>
-                                      <SelectItem value="7:30pm">
-                                        7:30 PM
-                                      </SelectItem>
-                                      <SelectItem value="8:00pm">
-                                        8:00 PM
-                                      </SelectItem>
-                                      <SelectItem value="8:30pm">
-                                        8:30 PM
-                                      </SelectItem>
-                                      <SelectItem value="9:00pm">
-                                        9:00 PM
-                                      </SelectItem>
-                                      <SelectItem value="9:30pm">
-                                        9:30 PM
-                                      </SelectItem>
-                                      <SelectItem value="10:00pm">
-                                        10:00 PM
-                                      </SelectItem>
-                                    </>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                              <div className="md:col-span-2">
+                                <Label htmlFor="dropoffLocation">
+                                  Dropoff Location
+                                </Label>
+                                <Input
+                                  id="dropoffLocation"
+                                  placeholder="e.g., Udaipur Airport, Maharana Pratap Railway Station"
+                                  {...step2Form.register("dropoffLocation")}
+                                  className="mt-1"
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Additional Notes */}
                   <div>
