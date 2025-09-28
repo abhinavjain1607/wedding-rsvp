@@ -31,6 +31,8 @@ export const guests = pgTable("guests", {
   email: varchar("email").notNull(),
   phone: varchar("phone"),
   phoneWhatsapp: varchar("phone_whatsapp"),
+  adultCount: integer("adult_count").default(1), // Number of adults (IDs required)
+  kidCount: integer("kid_count").default(0), // Number of kids (no IDs required)
   rsvpStatus: varchar("rsvp_status").default("pending"), // pending, attending, declined, tentative
   step1Completed: boolean("step1_completed").default(false),
 
@@ -39,7 +41,7 @@ export const guests = pgTable("guests", {
 
   // ID Document upload (valid IDs: aadhar, pan, passport, voter id, drivers license)
   idDocumentType: varchar("id_document_type"), // aadhar, pan, passport, voter_id, drivers_license
-  idUploadUrl: text("id_upload_url"),
+  idUploadUrls: jsonb("id_upload_urls"), // Array of GCS URLs for multiple documents
 
   // Transport details
   transportMode: varchar("transport_mode"), // flight, train, driving, bus, other
@@ -66,7 +68,6 @@ export const guests = pgTable("guests", {
   additionalNotes: text("additional_notes"),
 
   // Legacy fields (keeping for backward compatibility)
-  guestCount: integer("guest_count").default(1),
   requiresAccommodation: boolean("requires_accommodation").default(false),
   phoneSms: varchar("phone_sms"),
   pickupDateTime: timestamp("pickup_datetime"),
@@ -142,6 +143,14 @@ export const step1Schema = z.object({
   email: z.string().email("Valid email is required"),
   phone: z.string().optional(),
   phoneWhatsapp: z.string().optional(),
+  adultCount: z
+    .number()
+    .min(1, "At least 1 adult is required")
+    .max(10, "Maximum 10 adults allowed"),
+  kidCount: z
+    .number()
+    .min(0, "Kid count cannot be negative")
+    .max(10, "Maximum 10 kids allowed"),
   rsvpStatus: z.enum(["attending", "declined", "tentative"]),
 });
 
@@ -151,13 +160,15 @@ export const insertGuestStep1Schema = createInsertSchema(guests).pick({
   email: true,
   phone: true,
   phoneWhatsapp: true,
+  adultCount: true,
+  kidCount: true,
   rsvpStatus: true,
 });
 
 // Step 2 specific schema
 export const insertGuestStep2Schema = createInsertSchema(guests).pick({
   idDocumentType: true,
-  idUploadUrl: true,
+  idUploadUrls: true,
   transportMode: true,
   needsTransportPickup: true,
   needsTransportReturn: true,

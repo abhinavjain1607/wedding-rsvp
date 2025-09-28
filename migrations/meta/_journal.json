@@ -29,6 +29,34 @@
       "when": 1759011549035,
       "tag": "0003_zippy_roulette",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1759016425443,
+      "tag": "0004_broken_mandrill",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1759016777361,
+      "tag": "0005_many_hammerhead",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1759019096453,
+      "tag": "0006_fine_ulik",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1759019697147,
+      "tag": "0007_remove_guest_count",
+      "breakpoints": true
     }
   ]
 }

@@ -306,7 +306,8 @@ export default function MessageModal({
                       <code>{"{{fullName}}"}</code> - Full name
                     </span>
                     <span>
-                      <code>{"{{guestCount}}"}</code> - Number of guests
+                      <code>{"{{guestCount}}"}</code> - Total number of guests
+                      (adults + kids)
                     </span>
                     <span>
                       <code>{"{{transportMode}}"}</code> - Transport method

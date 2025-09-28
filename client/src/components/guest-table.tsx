@@ -387,9 +387,12 @@ export default function GuestTable({ guests }: GuestTableProps) {
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      {guest.idUploadUrl ? (
+                      {guest.idUploadUrls &&
+                      Array.isArray(guest.idUploadUrls) &&
+                      guest.idUploadUrls.length > 0 ? (
                         <span className="text-green-600 font-medium">
-                          ✓ Uploaded
+                          ✓ {guest.idUploadUrls.length} document
+                          {guest.idUploadUrls.length > 1 ? "s" : ""} uploaded
                         </span>
                       ) : (
                         <span className="text-muted-foreground">

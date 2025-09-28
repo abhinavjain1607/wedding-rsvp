@@ -82,7 +82,7 @@ function processMessageTemplate(template: string, guest: any): string {
   );
   processedMessage = processedMessage.replace(
     /\{\{guestCount\}\}/g,
-    guest.guestCount?.toString() || "1"
+    (guest.adultCount || 1 + guest.kidCount || 0).toString()
   );
   processedMessage = processedMessage.replace(
     /\{\{phoneWhatsapp\}\}/g,
@@ -599,7 +599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Guest RSVP routes - Step 2 (Detailed Info)
   app.put(
     "/api/guests/:id/step2",
-    upload.single("idDocument"),
+    upload.array("idDocuments", 5), // Allow up to 5 ID documents
     async (req, res) => {
       try {
         const { id } = req.params;
@@ -664,22 +664,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const guestData = insertGuestStep2Schema.partial().parse(processedBody);
 
-        // Handle file upload if present
-        if (req.file) {
+        // Handle multiple file uploads if present
+        if (req.files && Array.isArray(req.files) && req.files.length > 0) {
           try {
-            // Upload to GCS and get public URL using original filename from form data
-            const originalFilename =
-              req.body.originalFilename || req.file.originalname;
-            const ext = path.extname(originalFilename);
-            const baseName = path.basename(originalFilename, ext);
-            const timestamp = Date.now();
-            const gcsFileName = `rsvp/${baseName}_${timestamp}${ext}`;
-            const localFilePath = req.file.path;
-            const gcsUrl = await uploadFileToGCS(localFilePath, gcsFileName);
-            guestData.idUploadUrl = gcsUrl;
+            const uploadedUrls: string[] = [];
+
+            for (let i = 0; i < req.files.length; i++) {
+              const file = req.files[i];
+              // Use guest name in filename for better organization
+              const guestName =
+                `${req.body.firstName}_${req.body.lastName}`.replace(
+                  /\s+/g,
+                  "_"
+                );
+              const timestamp = Date.now();
+              const ext = path.extname(file.originalname);
+              const baseName = path.basename(file.originalname, ext);
+              const gcsFileName = `rsvp/${guestName}_${baseName}_${timestamp}_${
+                i + 1
+              }${ext}`;
+              const localFilePath = file.path;
+              const gcsUrl = await uploadFileToGCS(localFilePath, gcsFileName);
+              uploadedUrls.push(gcsUrl);
+            }
+
+            // Get existing URLs if any (for updates)
+            const existingUrls = Array.isArray(guestData.idUploadUrls)
+              ? guestData.idUploadUrls
+              : [];
+            guestData.idUploadUrls = [...existingUrls, ...uploadedUrls];
           } catch (uploadError) {
             console.error("GCS upload failed:", uploadError);
-            // Continue without the file URL - don't fail the entire request
+            // Continue without the file URLs - don't fail the entire request
           }
         }
 
@@ -737,7 +753,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const gcsFileName = `${req.file.filename}${ext}`;
         const localFilePath = req.file.path;
         const gcsUrl = await uploadFileToGCS(localFilePath, gcsFileName);
-        guestData.idUploadUrl = gcsUrl;
+        // For legacy routes, store as single-item array
+        guestData.idUploadUrls = [gcsUrl];
       }
 
       const guest = await storage.createGuest(guestData);
@@ -785,7 +802,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const gcsFileName = `${req.file.filename}${ext}`;
         const localFilePath = req.file.path;
         const gcsUrl = await uploadFileToGCS(localFilePath, gcsFileName);
-        guestData.idUploadUrl = gcsUrl;
+        // For legacy routes, store as single-item array
+        guestData.idUploadUrls = [gcsUrl];
       }
 
       const guest = await storage.updateGuest(id, guestData);

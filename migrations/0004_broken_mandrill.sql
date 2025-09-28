@@ -1,0 +1,1 @@
+ALTER TABLE "guests" RENAME COLUMN "id_upload_url" TO "id_upload_urls";

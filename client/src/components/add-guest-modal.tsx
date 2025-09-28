@@ -33,7 +33,8 @@ interface GuestFormData {
   lastName: string;
   phoneWhatsapp?: string;
   phoneSms?: string;
-  guestCount: number;
+  adultCount: number;
+  kidCount: number;
   requiresAccommodation: boolean;
   transportMode?: string;
   rsvpStatus: string;
@@ -53,7 +54,8 @@ export default function AddGuestModal({
       lastName: "",
       phoneWhatsapp: "",
       phoneSms: "",
-      guestCount: 1,
+      adultCount: 1,
+      kidCount: 0,
       requiresAccommodation: false,
       transportMode: "",
       rsvpStatus: "pending",
@@ -95,11 +97,19 @@ export default function AddGuestModal({
       return;
     }
 
-    // Validate guest count
-    if (data.guestCount < 1 || data.guestCount > 10) {
+    // Validate guest counts
+    if (data.adultCount < 1 || data.adultCount > 10) {
       toast({
-        title: "Invalid Guest Count",
-        description: "Guest count must be between 1 and 10",
+        title: "Invalid Adult Count",
+        description: "Adult count must be between 1 and 10",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (data.kidCount < 0 || data.kidCount > 10) {
+      toast({
+        title: "Invalid Kid Count",
+        description: "Kid count must be between 0 and 10",
         variant: "destructive",
       });
       return;
@@ -179,37 +189,55 @@ export default function AddGuestModal({
           {/* Guest Details */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="guestCount">Number of Guests*</Label>
+              <Label htmlFor="adultCount">Number of Adults*</Label>
               <Input
-                id="guestCount"
+                id="adultCount"
                 type="number"
                 min="1"
                 max="10"
-                {...form.register("guestCount", {
+                {...form.register("adultCount", {
                   required: true,
                   valueAsNumber: true,
                   min: 1,
                   max: 10,
                 })}
-                data-testid="input-guest-count"
+                data-testid="input-adult-count"
               />
             </div>
             <div>
-              <Label htmlFor="rsvpStatus">RSVP Status</Label>
-              <Select
-                value={form.watch("rsvpStatus")}
-                onValueChange={(value) => form.setValue("rsvpStatus", value)}
-              >
-                <SelectTrigger data-testid="select-rsvp-status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="attending">Attending</SelectItem>
-                  <SelectItem value="declined">Declined</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="kidCount">Number of Kids</Label>
+              <Input
+                id="kidCount"
+                type="number"
+                min="0"
+                max="10"
+                {...form.register("kidCount", {
+                  required: true,
+                  valueAsNumber: true,
+                  min: 0,
+                  max: 10,
+                })}
+                data-testid="input-kid-count"
+              />
             </div>
+          </div>
+
+          {/* RSVP Status */}
+          <div>
+            <Label htmlFor="rsvpStatus">RSVP Status</Label>
+            <Select
+              value={form.watch("rsvpStatus")}
+              onValueChange={(value) => form.setValue("rsvpStatus", value)}
+            >
+              <SelectTrigger data-testid="select-rsvp-status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="attending">Attending</SelectItem>
+                <SelectItem value="declined">Declined</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Accommodation */}

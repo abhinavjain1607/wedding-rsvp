@@ -24,6 +24,7 @@ import {
   AlertCircle,
   Download,
   Trash2,
+  Users,
 } from "lucide-react";
 import type { Guest } from "@shared/schema";
 
@@ -271,6 +272,21 @@ export default function GuestDetailsModal({
                     </p>
                   </div>
                 </div>
+                <div className="flex items-center gap-3">
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Party Size</p>
+                    <p className="text-sm text-muted-foreground">
+                      {guest.adultCount || 1} adult
+                      {(guest.adultCount || 1) !== 1 ? "s" : ""}
+                      {guest.kidCount
+                        ? `, ${guest.kidCount} kid${
+                            guest.kidCount !== 1 ? "s" : ""
+                          }`
+                        : ""}
+                    </p>
+                  </div>
+                </div>
                 {guest.phoneSms && (
                   <div className="flex items-center gap-3">
                     <MessageSquare className="w-4 h-4 text-muted-foreground" />
@@ -291,7 +307,7 @@ export default function GuestDetailsModal({
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <FileText className="w-5 h-5 text-orange-600" />
-                ID Document
+                ID Documents
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -304,27 +320,46 @@ export default function GuestDetailsModal({
                       : "Not provided"}
                   </p>
                 </div>
-                {guest.idUploadUrl ? (
-                  <div>
-                    <p className="text-sm font-medium">Document File</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-1"
-                      onClick={() => window.open(guest.idUploadUrl!, "_blank")}
-                    >
-                      <Download className="w-3 h-3 mr-1" />
-                      View Document
-                    </Button>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-sm font-medium">Document File</p>
-                    <p className="text-sm text-muted-foreground">
-                      Not uploaded
-                    </p>
-                  </div>
-                )}
+                <div>
+                  <p className="text-sm font-medium">Documents Uploaded</p>
+                  {(() => {
+                    // Handle array format for multiple documents
+                    const urls = Array.isArray(guest.idUploadUrls)
+                      ? guest.idUploadUrls
+                      : [];
+
+                    if (urls.length === 0) {
+                      return (
+                        <p className="text-sm text-muted-foreground">
+                          No documents uploaded
+                        </p>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">
+                          {urls.length} document{urls.length > 1 ? "s" : ""}{" "}
+                          uploaded
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {urls.map((url, index) => (
+                            <Button
+                              key={index}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(url, "_blank")}
+                              className="text-xs"
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              Document {index + 1}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -373,39 +408,21 @@ export default function GuestDetailsModal({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div
                   className={`flex items-center gap-3 p-3 rounded-lg ${
-                    guest.needsTransportDec10 ? "bg-green-50" : "bg-gray-50"
+                    guest.needsTransportPickup ? "bg-green-50" : "bg-gray-50"
                   }`}
                 >
-                  {guest.needsTransportDec10 ? (
+                  {guest.needsTransportPickup ? (
                     <CheckCircle className="w-5 h-5 text-green-600" />
                   ) : (
                     <XCircle className="w-5 h-5 text-gray-400" />
                   )}
                   <div>
-                    <p className="text-sm font-medium">December 10th Pickup</p>
+                    <p className="text-sm font-medium">Pickup Service</p>
                     <p className="text-sm text-muted-foreground">
-                      {guest.needsTransportDec10 ? "Required" : "Not needed"}
-                    </p>
-                  </div>
-                </div>
-
-                <div
-                  className={`flex items-center gap-3 p-3 rounded-lg ${
-                    guest.needsTransportDec11 ? "bg-green-50" : "bg-gray-50"
-                  }`}
-                >
-                  {guest.needsTransportDec11 ? (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-gray-400" />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium">December 11th Pickup</p>
-                    <p className="text-sm text-muted-foreground">
-                      {guest.needsTransportDec11 ? "Required" : "Not needed"}
+                      {guest.needsTransportPickup ? "Required" : "Not needed"}
                     </p>
                   </div>
                 </div>
@@ -421,7 +438,7 @@ export default function GuestDetailsModal({
                     <XCircle className="w-5 h-5 text-gray-400" />
                   )}
                   <div>
-                    <p className="text-sm font-medium">Return Taxi</p>
+                    <p className="text-sm font-medium">Return Drop-off</p>
                     <p className="text-sm text-muted-foreground">
                       {guest.needsTransportReturn ? "Required" : "Not needed"}
                     </p>
