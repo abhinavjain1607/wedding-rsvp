@@ -65,18 +65,21 @@ export default function AdminDashboard() {
     attending: guests.filter((g) => g.rsvpStatus === "attending").length,
     declined: guests.filter((g) => g.rsvpStatus === "declined").length,
     tentative: guests.filter((g) => g.rsvpStatus === "tentative").length,
-    accommodationNeeded: guests.filter((g) => g.requiresAccommodation).length,
+    totalAdults: guests
+      .filter((g) => g.rsvpStatus === "attending")
+      .reduce((sum, g) => sum + (g.adultCount || 1), 0),
+    totalChildren: guests
+      .filter((g) => g.rsvpStatus === "attending")
+      .reduce((sum, g) => sum + (g.kidCount || 0), 0),
     step1Completed: guests.filter((g) => g.step1Completed).length,
     step2Completed: guests.filter((g) => g.step2Completed).length,
     needsTaxi: guests.filter(
-      (g) =>
-        g.needsTransportDec9 ||
-        g.needsTransportDec10 ||
-        g.needsTransportDec11 ||
-        g.needsTransportReturn
+      (g) => g.needsTransportPickup || g.needsTransportReturn
     ).length,
     hasFlightInfo: guests.filter(
-      (g) => g.flightNumber && g.flightNumber.trim() !== ""
+      (g) =>
+        (g.flightNumber && g.flightNumber.trim() !== "") ||
+        (g.trainNumber && g.trainNumber.trim() !== "")
     ).length,
   };
 
@@ -109,7 +112,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card data-testid="stat-total">
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -133,7 +136,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card data-testid="stat-attending">
+          <Card data-testid="stat-adults">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -143,13 +146,36 @@ export default function AdminDashboard() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-sm font-medium text-muted-foreground">
-                    Attending
+                    Adults
                   </h3>
                   <p
                     className="text-2xl font-semibold text-foreground"
-                    data-testid="stat-attending-value"
+                    data-testid="stat-adults-value"
                   >
-                    {guestsLoading ? "..." : enhancedStats.attending}
+                    {guestsLoading ? "..." : enhancedStats.totalAdults}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card data-testid="stat-children">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Users className="w-4 h-4 text-blue-600" />
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    Children
+                  </h3>
+                  <p
+                    className="text-2xl font-semibold text-foreground"
+                    data-testid="stat-children-value"
+                  >
+                    {guestsLoading ? "..." : enhancedStats.totalChildren}
                   </p>
                 </div>
               </div>
@@ -173,52 +199,6 @@ export default function AdminDashboard() {
                     data-testid="stat-declined-value"
                   >
                     {guestsLoading ? "..." : enhancedStats.declined}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card data-testid="stat-tentative">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Clock className="w-4 h-4 text-orange-600" />
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Tentative
-                  </h3>
-                  <p
-                    className="text-2xl font-semibold text-foreground"
-                    data-testid="stat-tentative-value"
-                  >
-                    {guestsLoading ? "..." : enhancedStats.tentative}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card data-testid="stat-accommodation">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
-                    <Building className="w-4 h-4 text-accent-foreground" />
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Need Accommodation
-                  </h3>
-                  <p
-                    className="text-2xl font-semibold text-foreground"
-                    data-testid="stat-accommodation-value"
-                  >
-                    {guestsLoading ? "..." : enhancedStats.accommodationNeeded}
                   </p>
                 </div>
               </div>
@@ -307,7 +287,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-sm font-medium text-muted-foreground">
-                    Flight Info
+                    Flight/Train Info
                   </h3>
                   <p
                     className="text-2xl font-semibold text-foreground"

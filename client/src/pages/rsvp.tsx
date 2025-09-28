@@ -150,6 +150,26 @@ export default function RSVP() {
     }
   }, [watchedDropoffDate, watchedDropoffTime]);
 
+  // Clear drop-off fields when drop-off checkbox is unchecked
+  const watchedNeedsTransportReturn = step2Form.watch("needsTransportReturn");
+  useEffect(() => {
+    if (!watchedNeedsTransportReturn) {
+      step2Form.setValue("dropoffDate", "");
+      step2Form.setValue("dropoffTime", "");
+      step2Form.setValue("dropoffLocation", "");
+    }
+  }, [watchedNeedsTransportReturn, step2Form]);
+
+  // Clear pickup fields when pickup checkbox is unchecked
+  const watchedNeedsTransportPickup = step2Form.watch("needsTransportPickup");
+  useEffect(() => {
+    if (!watchedNeedsTransportPickup) {
+      step2Form.setValue("pickupDate", "");
+      step2Form.setValue("pickupTime", "");
+      step2Form.setValue("pickupLocation", "");
+    }
+  }, [watchedNeedsTransportPickup, step2Form]);
+
   const findForm = useForm<FindGuestData>({
     resolver: zodResolver(findGuestSchema),
   });

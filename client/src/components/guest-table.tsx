@@ -315,11 +315,12 @@ export default function GuestTable({ guests }: GuestTableProps) {
               </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Contact</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Attending</TableHead>
               <TableHead>Completion</TableHead>
+              <TableHead>Need Taxi</TableHead>
+              <TableHead>Flight/Train Info</TableHead>
               <TableHead>Pickup Date & Time</TableHead>
               <TableHead>Document Uploaded</TableHead>
-              <TableHead>Transport</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -327,7 +328,7 @@ export default function GuestTable({ guests }: GuestTableProps) {
             {filteredGuests.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={9}
                   className="text-center py-8 text-muted-foreground"
                 >
                   {guests.length === 0
@@ -366,9 +367,59 @@ export default function GuestTable({ guests }: GuestTableProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {getStatusBadge(guest.rsvpStatus || "pending")}
+                    <div className="text-sm">
+                      {guest.rsvpStatus === "attending" ? (
+                        <span className="text-green-600 font-medium">
+                          {guest.adultCount || 1} Adult
+                          {(guest.adultCount || 1) !== 1 ? "s" : ""}
+                          {guest.kidCount
+                            ? ` ${guest.kidCount} Kid${
+                                guest.kidCount !== 1 ? "s" : ""
+                              }`
+                            : ""}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground capitalize">
+                          {guest.rsvpStatus || "pending"}
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>{getCompletionBadge(guest)}</TableCell>
+                  <TableCell>
+                    <div className="text-sm space-y-1">
+                      {guest.needsTransportPickup && (
+                        <div className="text-orange-600">Pickup needed</div>
+                      )}
+                      {guest.needsTransportReturn && (
+                        <div className="text-orange-600">Dropoff needed</div>
+                      )}
+                      {!guest.needsTransportPickup &&
+                        !guest.needsTransportReturn && (
+                          <span className="text-muted-foreground">No</span>
+                        )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {guest.flightNumber || guest.trainNumber ? (
+                        <div className="space-y-1">
+                          {guest.flightNumber && (
+                            <div className="text-indigo-600">
+                              ✈️ {guest.flightNumber}
+                            </div>
+                          )}
+                          {guest.trainNumber && (
+                            <div className="text-green-600">
+                              🚂 {guest.trainNumber}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div className="text-sm">
                       {guest.pickupDate && guest.pickupTime ? (
@@ -400,11 +451,6 @@ export default function GuestTable({ guests }: GuestTableProps) {
                         </span>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="capitalize text-sm">
-                      {guest.transportMode || "Not specified"}
-                    </span>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
