@@ -197,7 +197,7 @@ export default function Home() {
 
             {/* Enhanced buttons without container */}
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-6">
-              <Link href="/rsvp">
+              <Link href={`/rsvp${window.location.search}`}>
                 <Button
                   size="lg"
                   className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0 w-52 h-14 rounded-full font-medium shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 text-lg tracking-wide"

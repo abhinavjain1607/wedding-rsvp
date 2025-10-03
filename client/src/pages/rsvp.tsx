@@ -41,8 +41,8 @@ const step1Schema = z.object({
   email: z.string().email("Valid email is required"),
   phone: z.string().min(1, "Phone number is required"),
   phoneWhatsapp: z.string().min(1, "WhatsApp number is required"),
-  adultCount: z.number().min(1).max(10),
-  kidCount: z.number().min(0).max(10),
+  adultCount: z.number().min(1).max(10).optional(),
+  kidCount: z.number().min(0).max(10).optional(),
   rsvpStatus: z.enum(["attending", "tentative", "declined"]),
 });
 
@@ -116,8 +116,16 @@ export default function RSVP() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Check for family-friendly version query parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const isFamilyVersion = urlParams.get("t") === "fm";
+
   const step1Form = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
+    defaultValues: {
+      adultCount: 1,
+      kidCount: 0,
+    },
   });
 
   const step2Form = useForm<Step2FormData>({
@@ -450,12 +458,19 @@ export default function RSVP() {
   });
 
   const onStep1Submit = (data: Step1FormData) => {
+    // Set default values for family version if not provided
+    const submitData = {
+      ...data,
+      adultCount: data.adultCount ?? (isFamilyVersion ? 1 : 1),
+      kidCount: data.kidCount ?? (isFamilyVersion ? 0 : 0),
+    };
+
     if (currentGuestId) {
       // Update existing guest
-      updateGuestMutation.mutate({ id: currentGuestId, data });
+      updateGuestMutation.mutate({ id: currentGuestId, data: submitData });
     } else {
       // Create new guest
-      step1Mutation.mutate(data);
+      step1Mutation.mutate(submitData);
     }
   };
 
@@ -582,7 +597,9 @@ export default function RSVP() {
                   : "We understand and appreciate you letting us know. You'll be in our hearts on our special day."}
               </p>
               <Button
-                onClick={() => (window.location.href = "/")}
+                onClick={() =>
+                  (window.location.href = `/${window.location.search}`)
+                }
                 className="bg-pink-500 hover:bg-pink-600"
               >
                 Return to Home
@@ -662,7 +679,13 @@ export default function RSVP() {
             <div className="text-center mb-8">
               <Button
                 variant="ghost"
-                onClick={() => setCurrentFlow("select")}
+                onClick={() => {
+                  const url = new URL(window.location.href);
+                  url.pathname = "/rsvp";
+                  url.searchParams.set("flow", "select");
+                  window.history.replaceState({}, "", url.toString());
+                  setCurrentFlow("select");
+                }}
                 className="mb-4"
               >
                 ← Back to options
@@ -739,7 +762,13 @@ export default function RSVP() {
             <div className="text-center mb-8">
               <Button
                 variant="ghost"
-                onClick={() => setCurrentFlow("select")}
+                onClick={() => {
+                  const url = new URL(window.location.href);
+                  url.pathname = `/rsvp${window.location.search}`;
+                  url.searchParams.set("flow", "select");
+                  window.history.replaceState({}, "", url.toString());
+                  setCurrentFlow("select");
+                }}
                 className="mb-4"
               >
                 ← Back to options
@@ -851,52 +880,54 @@ export default function RSVP() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <Label htmlFor="adultCount">Number of Adults *</Label>
-                      <Input
-                        id="adultCount"
-                        type="number"
-                        min="1"
-                        max="10"
-                        placeholder="1"
-                        {...step1Form.register("adultCount", {
-                          valueAsNumber: true,
-                        })}
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Each adult needs a valid ID for hotel check-in
-                      </p>
-                      {step1Form.formState.errors.adultCount && (
-                        <p className="text-sm text-destructive mt-1">
-                          {step1Form.formState.errors.adultCount.message}
+                  {!isFamilyVersion && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label htmlFor="adultCount">Number of Adults *</Label>
+                        <Input
+                          id="adultCount"
+                          type="number"
+                          min="1"
+                          max="10"
+                          placeholder="1"
+                          {...step1Form.register("adultCount", {
+                            valueAsNumber: true,
+                          })}
+                          className="mt-1"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Each adult needs a valid ID for hotel check-in
                         </p>
-                      )}
-                    </div>
-                    <div>
-                      <Label htmlFor="kidCount">Number of Kids</Label>
-                      <Input
-                        id="kidCount"
-                        type="number"
-                        min="0"
-                        max="10"
-                        placeholder="0"
-                        {...step1Form.register("kidCount", {
-                          valueAsNumber: true,
-                        })}
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Kids don't need IDs for check-in
-                      </p>
-                      {step1Form.formState.errors.kidCount && (
-                        <p className="text-sm text-destructive mt-1">
-                          {step1Form.formState.errors.kidCount.message}
+                        {step1Form.formState.errors.adultCount && (
+                          <p className="text-sm text-destructive mt-1">
+                            {step1Form.formState.errors.adultCount.message}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <Label htmlFor="kidCount">Number of Kids</Label>
+                        <Input
+                          id="kidCount"
+                          type="number"
+                          min="0"
+                          max="10"
+                          placeholder="0"
+                          {...step1Form.register("kidCount", {
+                            valueAsNumber: true,
+                          })}
+                          className="mt-1"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Kids don't need IDs for check-in
                         </p>
-                      )}
+                        {step1Form.formState.errors.kidCount && (
+                          <p className="text-sm text-destructive mt-1">
+                            {step1Form.formState.errors.kidCount.message}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div>
                     <Label className="text-sm font-medium mb-3 block">

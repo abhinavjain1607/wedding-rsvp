@@ -38,7 +38,7 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
-            <Link href="/">
+            <Link href={`/${window.location.search}`}>
               <div className="flex items-center space-x-3 cursor-pointer">
                 <img
                   src="/images/logo.svg"
@@ -67,7 +67,7 @@ export default function Navigation() {
                 {item.label}
               </button>
             ))}
-            <Link href="/rsvp">
+            <Link href={`/rsvp${window.location.search}`}>
               <Button
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
                 data-testid="nav-rsvp"
@@ -101,7 +101,7 @@ export default function Navigation() {
                       {item.label}
                     </button>
                   ))}
-                  <Link href="/rsvp">
+                  <Link href={`/rsvp${window.location.search}`}>
                     <Button
                       className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                       onClick={() => setIsOpen(false)}
