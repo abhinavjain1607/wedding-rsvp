@@ -5,6 +5,10 @@ import { serveStatic } from "./static";
 import { log } from "./logger";
 
 const app = express();
+
+// Trust proxy - required for Vercel and other proxies to properly handle secure cookies
+app.set('trust proxy', 1);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

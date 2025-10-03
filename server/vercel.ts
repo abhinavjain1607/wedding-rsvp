@@ -4,6 +4,11 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 
 const app = express();
+
+// Trust proxy - CRITICAL for Vercel to properly handle secure cookies
+// Without this, Express won't recognize HTTPS and secure cookies won't be set
+app.set('trust proxy', 1);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
