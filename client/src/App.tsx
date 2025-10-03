@@ -46,19 +46,18 @@ function Router() {
       <Route
         path="/admin-logout"
         component={() => {
-          // Force logout all admin sessions
-          localStorage.setItem("admin-logged-out", "true");
-          localStorage.removeItem("admin-auth");
-          sessionStorage.clear();
-          // Clear cookies
-          document.cookie.split(";").forEach((c) => {
-            const eqPos = c.indexOf("=");
-            const name = eqPos > -1 ? c.substr(0, eqPos) : c;
-            document.cookie =
-              name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+          // Call logout endpoint to destroy session
+          fetch("/api/local-logout", {
+            method: "POST",
+            credentials: "include",
+          }).finally(() => {
+            // Force logout all admin sessions
+            localStorage.setItem("admin-logged-out", "true");
+            localStorage.removeItem("admin-auth");
+            sessionStorage.clear();
+            // Redirect to home
+            window.location.href = "/";
           });
-          // Redirect to home
-          window.location.href = "/";
           return null;
         }}
       />

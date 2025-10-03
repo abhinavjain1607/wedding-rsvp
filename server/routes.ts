@@ -439,11 +439,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
-      // Return a simple admin user since we have simple authentication
+      const adminEmail = req.session.adminEmail;
+
+      // If we have an admin email in session, try to get from database
+      if (adminEmail) {
+        const dbAdmin = await storage.getAdmin(adminEmail);
+        if (dbAdmin) {
+          return res.json({
+            user: {
+              sub: dbAdmin.email,
+              email: dbAdmin.email,
+              first_name: dbAdmin.name || "Admin",
+              last_name: "",
+              profileImageUrl: null,
+            },
+          });
+        }
+      }
+
+      // Fallback to generic admin user
       res.json({
         user: {
           sub: "admin",
-          email: "admin@wedding.com",
+          email: adminEmail || "admin@wedding.com",
           first_name: "Admin",
           last_name: "User",
           profileImageUrl: null,
@@ -455,50 +473,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Local login endpoint (for frontend compatibility)
+  // Local login endpoint - database admins only
   app.post("/api/local-login", async (req, res) => {
     try {
       const { email, password } = req.body;
-      const expectedPassword = process.env.ADMIN_PASSWORD;
 
-      if (!expectedPassword) {
-        // If no admin password is set, allow access (for development)
-        const userData = {
-          id: "admin",
-          email: email || "admin@wedding.com",
-          firstName: "Admin",
-          lastName: "User",
-          profileImageUrl: "",
-        };
-        return res.json({
-          message: "Login successful (no password configured)",
-          user: userData,
-          success: true,
+      if (!email || !password) {
+        return res.status(400).json({
+          success: false,
+          message: "Email and password are required",
         });
       }
 
-      if (password === expectedPassword) {
-        const userData = {
-          id: "admin",
-          email: email || "admin@wedding.com",
-          firstName: "Admin",
-          lastName: "User",
-          profileImageUrl: "",
-        };
-        return res.json({
-          message: "Login successful",
-          user: userData,
-          success: true,
+      // Authenticate against database admins only
+      const dbAdmin = await storage.getAdmin(email);
+      if (!dbAdmin) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid credentials",
         });
       }
 
-      return res.status(401).json({
-        success: false,
-        message: "Invalid password",
+      const isValidPassword = await storage.verifyAdminPassword(email, password);
+      if (!isValidPassword) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid credentials",
+        });
+      }
+
+      // Create session for authenticated database admin
+      req.session.isAdmin = true;
+      req.session.adminEmail = email;
+      const userData = {
+        id: dbAdmin.email,
+        email: dbAdmin.email,
+        firstName: dbAdmin.name || "Admin",
+        lastName: "",
+        profileImageUrl: "",
+      };
+
+      return res.json({
+        message: "Login successful",
+        user: userData,
+        success: true,
       });
     } catch (error) {
       console.error("Local login error:", error);
       res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  // Logout endpoint
+  app.post("/api/local-logout", async (req, res) => {
+    try {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Logout error:", err);
+          return res.status(500).json({ success: false, message: "Logout failed" });
+        }
+        res.clearCookie("connect.sid");
+        res.json({ success: true, message: "Logged out successfully" });
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ success: false, message: "Logout failed" });
     }
   });
 
