@@ -25,9 +25,10 @@ interface DashboardContent {
 }
 
 export default function Home() {
-  // Check for family-friendly version query parameter
+  // Check for query parameters
   const urlParams = new URLSearchParams(window.location.search);
   const isFamilyVersion = urlParams.get("t") === "fm";
+  const isLocalFriendsVersion = urlParams.get("t") === "loc";
 
   const { data: content = [] } = useQuery<DashboardContent[]>({
     queryKey: ["/api/dashboard-content"],
@@ -197,15 +198,17 @@ export default function Home() {
 
             {/* Enhanced buttons without container */}
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-6">
-              <Link href={`/rsvp${window.location.search}`}>
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0 w-52 h-14 rounded-full font-medium shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 text-lg tracking-wide"
-                  data-testid="button-rsvp"
-                >
-                  RSVP Now
-                </Button>
-              </Link>
+              {!isLocalFriendsVersion && (
+                <Link href={`/rsvp${window.location.search}`}>
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0 w-52 h-14 rounded-full font-medium shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 text-lg tracking-wide"
+                    data-testid="button-rsvp"
+                  >
+                    RSVP Now
+                  </Button>
+                </Link>
+              )}
               <Button
                 variant="outline"
                 size="lg"

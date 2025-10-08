@@ -34,15 +34,18 @@ export function isAdmin(req: Request, res: Response, next: NextFunction) {
 
 export async function setupAuth(app: Express) {
   // Configure session middleware
-  const sessionSecret = process.env.SESSION_SECRET || "wedding-rsvp-secret-change-in-production";
+  const sessionSecret =
+    process.env.SESSION_SECRET || "wedding-rsvp-secret-change-in-production";
   const PostgresStore = connectPgSimple(session);
 
   // Create a separate pg Pool for session store (works in both dev and production)
   const sessionPool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL?.includes("supabase.co") || process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : undefined,
+    ssl:
+      process.env.DATABASE_URL?.includes("supabase.co") ||
+      process.env.NODE_ENV === "production"
+        ? { rejectUnauthorized: false }
+        : undefined,
   });
 
   const sessionConfig: session.SessionOptions = {
