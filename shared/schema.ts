@@ -67,6 +67,9 @@ export const guests = pgTable("guests", {
   // Additional information
   additionalNotes: text("additional_notes"),
 
+  // Room allocation
+  roomNumber: varchar("room_number"), // Hotel room assignment (S1-S4, 101-107, 201-207, 301-319, 401-407, 501-507)
+
   // Legacy fields (keeping for backward compatibility)
   requiresAccommodation: boolean("requires_accommodation").default(false),
   phoneSms: varchar("phone_sms"),

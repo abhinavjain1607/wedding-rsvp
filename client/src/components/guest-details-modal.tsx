@@ -1,6 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -11,22 +25,69 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   User,
-  Mail,
   Phone,
-  MessageSquare,
   Plane,
-  Calendar,
   Car,
-  Clock,
   FileText,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
   Download,
   Trash2,
-  Users,
+  Save,
 } from "lucide-react";
 import type { Guest } from "@shared/schema";
+
+// Room numbers from the hotel layout
+const ROOM_OPTIONS = [
+  { value: "S1", label: "S1" },
+  { value: "S2", label: "S2" },
+  { value: "S3", label: "S3" },
+  { value: "S4", label: "S4" },
+  { value: "101", label: "101" },
+  { value: "102", label: "102" },
+  { value: "103", label: "103" },
+  { value: "104", label: "104" },
+  { value: "105", label: "105" },
+  { value: "106", label: "106" },
+  { value: "107", label: "107" },
+  { value: "201", label: "201" },
+  { value: "202", label: "202" },
+  { value: "203", label: "203" },
+  { value: "204", label: "204" },
+  { value: "205", label: "205" },
+  { value: "206", label: "206" },
+  { value: "207", label: "207" },
+  { value: "301", label: "301" },
+  { value: "302", label: "302" },
+  { value: "303", label: "303" },
+  { value: "304", label: "304" },
+  { value: "305", label: "305" },
+  { value: "306", label: "306" },
+  { value: "307", label: "307" },
+  { value: "308", label: "308" },
+  { value: "309", label: "309" },
+  { value: "310", label: "310" },
+  { value: "311", label: "311" },
+  { value: "312", label: "312" },
+  { value: "314", label: "314" },
+  { value: "315", label: "315" },
+  { value: "316", label: "316" },
+  { value: "317", label: "317" },
+  { value: "318", label: "318" },
+  { value: "319", label: "319" },
+  { value: "401", label: "401" },
+  { value: "402", label: "402" },
+  { value: "403", label: "403" },
+  { value: "404", label: "404" },
+  { value: "405", label: "405" },
+  { value: "406", label: "406" },
+  { value: "407", label: "407" },
+  { value: "501", label: "501" },
+  { value: "502", label: "502" },
+  { value: "503", label: "503" },
+  { value: "504", label: "504" },
+  { value: "505", label: "505" },
+  { value: "506", label: "506" },
+  { value: "507", label: "507" },
+];
 
 interface GuestDetailsModalProps {
   guest: Guest | null;
@@ -41,522 +102,455 @@ export default function GuestDetailsModal({
   onClose,
   onDelete,
 }: GuestDetailsModalProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Form state
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    phoneWhatsapp: "",
+    adultCount: 1,
+    kidCount: 0,
+    rsvpStatus: "pending",
+    roomNumber: "",
+    transportMode: "",
+    flightNumber: "",
+    trainNumber: "",
+    needsTransportPickup: false,
+    needsTransportReturn: false,
+    pickupDate: "",
+    pickupTime: "",
+    pickupLocation: "",
+    dropoffDate: "",
+    dropoffTime: "",
+    dropoffLocation: "",
+    additionalNotes: "",
+  });
+
+  // Update form when guest changes
+  useEffect(() => {
+    if (guest) {
+      setFormData({
+        firstName: guest.firstName || "",
+        lastName: guest.lastName || "",
+        email: guest.email || "",
+        phone: guest.phone || "",
+        phoneWhatsapp: guest.phoneWhatsapp || "",
+        adultCount: guest.adultCount || 1,
+        kidCount: guest.kidCount || 0,
+        rsvpStatus: guest.rsvpStatus || "pending",
+        roomNumber: guest.roomNumber || "",
+        transportMode: guest.transportMode || "",
+        flightNumber: guest.flightNumber || "",
+        trainNumber: guest.trainNumber || "",
+        needsTransportPickup: guest.needsTransportPickup || false,
+        needsTransportReturn: guest.needsTransportReturn || false,
+        pickupDate: guest.pickupDate || "",
+        pickupTime: guest.pickupTime || "",
+        pickupLocation: guest.pickupLocation || "",
+        dropoffDate: guest.dropoffDate || "",
+        dropoffTime: guest.dropoffTime || "",
+        dropoffLocation: guest.dropoffLocation || "",
+        additionalNotes: guest.additionalNotes || "",
+      });
+    }
+  }, [guest]);
+
+  // Update guest mutation
+  const updateGuestMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const response = await apiRequest("PUT", `/api/guests/${guest?.id}`, data);
+      if (!response.ok) {
+        throw new Error("Failed to update guest");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/guests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({
+        title: "Success",
+        description: "Guest updated successfully",
+      });
+      onClose();
+    },
+    onError: (error) => {
+      console.error("Update error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update guest",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateGuestMutation.mutate(formData);
+  };
+
+  const handleChange = (field: string, value: string | number | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
   if (!guest) return null;
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "attending":
-        return (
-          <Badge className="bg-green-100 text-green-800 border-green-200">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Attending
-          </Badge>
-        );
-      case "declined":
-        return (
-          <Badge className="bg-red-100 text-red-800 border-red-200">
-            <XCircle className="w-3 h-3 mr-1" />
-            Declined
-          </Badge>
-        );
-      case "tentative":
-        return (
-          <Badge className="bg-orange-100 text-orange-800 border-orange-200">
-            <AlertCircle className="w-3 h-3 mr-1" />
-            Tentative
-          </Badge>
-        );
-      default:
-        return (
-          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-            <AlertCircle className="w-3 h-3 mr-1" />
-            Pending
-          </Badge>
-        );
-    }
-  };
-
-  const getStepCompletionBadge = (completed: boolean, stepName: string) => {
-    return completed ? (
-      <Badge className="bg-green-100 text-green-800 border-green-200">
-        <CheckCircle className="w-3 h-3 mr-1" />
-        {stepName} Complete
-      </Badge>
-    ) : (
-      <Badge className="bg-gray-100 text-gray-600 border-gray-200">
-        <AlertCircle className="w-3 h-3 mr-1" />
-        {stepName} Incomplete
-      </Badge>
-    );
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const getIdDocumentTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      aadhar: "Aadhar Card",
-      pan: "PAN Card",
-      passport: "Passport",
-      voter_id: "Voter ID",
-      drivers_license: "Driver's License",
-    };
-    return labels[type] || type;
-  };
-
-  const getTransportModeIcon = (mode: string) => {
-    switch (mode) {
-      case "flight":
-        return <Plane className="w-4 h-4" />;
-      case "train":
-        return <Car className="w-4 h-4" />;
-      case "driving":
-        return <Car className="w-4 h-4" />;
-      case "bus":
-        return <Car className="w-4 h-4" />;
-      default:
-        return <Car className="w-4 h-4" />;
-    }
-  };
-
-  const formatTime = (time: string) => {
-    // Handle both old and new time formats
-    const timeLabels: Record<string, string> = {
-      "6am": "6:00 AM",
-      "7am": "7:00 AM",
-      "8am": "8:00 AM",
-      "9am": "9:00 AM",
-      "10am": "10:00 AM",
-      "11am": "11:00 AM",
-      "12pm": "12:00 PM",
-      "6:00am": "6:00 AM",
-      "6:30am": "6:30 AM",
-      "7:00am": "7:00 AM",
-      "7:30am": "7:30 AM",
-      "8:00am": "8:00 AM",
-      "8:30am": "8:30 AM",
-      "9:00am": "9:00 AM",
-      "9:30am": "9:30 AM",
-      "10:00am": "10:00 AM",
-      "10:30am": "10:30 AM",
-      "11:00am": "11:00 AM",
-      "11:30am": "11:30 AM",
-      "12:00pm": "12:00 PM",
-      "12:30pm": "12:30 PM",
-      "1:00pm": "1:00 PM",
-      "1:30pm": "1:30 PM",
-      "2:00pm": "2:00 PM",
-      "2:30pm": "2:30 PM",
-      "3:00pm": "3:00 PM",
-      "3:30pm": "3:30 PM",
-      "4:00pm": "4:00 PM",
-      "4:30pm": "4:30 PM",
-      "5:00pm": "5:00 PM",
-      "5:30pm": "5:30 PM",
-      "6:00pm": "6:00 PM",
-      "6:30pm": "6:30 PM",
-      "7:00pm": "7:00 PM",
-      "7:30pm": "7:30 PM",
-      "8:00pm": "8:00 PM",
-      "8:30pm": "8:30 PM",
-      "9:00pm": "9:00 PM",
-      "9:30pm": "9:30 PM",
-      "10:00pm": "10:00 PM",
-    };
-    return timeLabels[time] || time;
-  };
-
-  const formatPickupDate = (date: string) => {
-    const dateLabels: Record<string, string> = {
-      dec10: "December 10th",
-      dec11: "December 11th",
-      dec12: "December 12th",
-    };
-    return dateLabels[date] || date;
-  };
+  const idUrls = Array.isArray(guest.idUploadUrls) ? guest.idUploadUrls : [];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <User className="w-6 h-6 text-blue-600" />
-            {guest.firstName} {guest.lastName}
+            Edit Guest: {guest.firstName} {guest.lastName}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Status and Progress Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="pt-4">
-                <div className="text-center">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                    RSVP Status
-                  </h3>
-                  {getStatusBadge(guest.rsvpStatus || "pending")}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="text-center">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                    Step 1
-                  </h3>
-                  {getStepCompletionBadge(
-                    guest.step1Completed || false,
-                    "Basic Info"
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="text-center">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                    Step 2
-                  </h3>
-                  {getStepCompletionBadge(
-                    guest.step2Completed || false,
-                    "Travel Details"
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Separator />
-
-          {/* Contact Information */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Basic Information */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Phone className="w-5 h-5 text-blue-600" />
-                Contact Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-3">
-                  <Mail className="w-4 h-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Email</p>
-                    <p className="text-sm text-muted-foreground">
-                      {guest.email || "Not provided"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Phone className="w-4 h-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Phone</p>
-                    <p className="text-sm text-muted-foreground">
-                      {guest.phone || "Not provided"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">WhatsApp</p>
-                    <p className="text-sm text-muted-foreground">
-                      {guest.phoneWhatsapp || "Not provided"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Users className="w-4 h-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Party Size</p>
-                    <p className="text-sm text-muted-foreground">
-                      {guest.adultCount || 1} adult
-                      {(guest.adultCount || 1) !== 1 ? "s" : ""}
-                      {guest.kidCount
-                        ? `, ${guest.kidCount} kid${
-                            guest.kidCount !== 1 ? "s" : ""
-                          }`
-                        : ""}
-                    </p>
-                  </div>
-                </div>
-                {guest.phoneSms && (
-                  <div className="flex items-center gap-3">
-                    <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">SMS Number</p>
-                      <p className="text-sm text-muted-foreground">
-                        {guest.phoneSms}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Step 2: ID Document */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="w-5 h-5 text-orange-600" />
-                ID Documents
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium">Document Type</p>
-                  <p className="text-sm text-muted-foreground">
-                    {guest.idDocumentType
-                      ? getIdDocumentTypeLabel(guest.idDocumentType)
-                      : "Not provided"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Documents Uploaded</p>
-                  {(() => {
-                    // Handle array format for multiple documents
-                    const urls = Array.isArray(guest.idUploadUrls)
-                      ? guest.idUploadUrls
-                      : [];
-
-                    if (urls.length === 0) {
-                      return (
-                        <p className="text-sm text-muted-foreground">
-                          No documents uploaded
-                        </p>
-                      );
-                    }
-
-                    return (
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">
-                          {urls.length} document{urls.length > 1 ? "s" : ""}{" "}
-                          uploaded
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {urls.map((url, index) => (
-                            <Button
-                              key={index}
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.open(url, "_blank")}
-                              className="text-xs"
-                            >
-                              <Download className="w-3 h-3 mr-1" />
-                              Document {index + 1}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Step 2: Transport Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Plane className="w-5 h-5 text-teal-600" />
-                Transport Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-3">
-                  {guest.transportMode ? (
-                    getTransportModeIcon(guest.transportMode)
-                  ) : (
-                    <Car className="w-4 h-4" />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium">Mode of Transport</p>
-                    <p className="text-sm text-muted-foreground capitalize">
-                      {guest.transportMode
-                        ? guest.transportMode.replace("_", " ")
-                        : "Not specified"}
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Flight Number</p>
-                  <p className="text-sm text-muted-foreground">
-                    {guest.flightNumber || "Not provided"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Step 2: Taxi Service Requirements */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Car className="w-5 h-5 text-indigo-600" />
-                Taxi Service Requirements
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Basic Information
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div
-                  className={`flex items-center gap-3 p-3 rounded-lg ${
-                    guest.needsTransportPickup ? "bg-green-50" : "bg-gray-50"
-                  }`}
-                >
-                  {guest.needsTransportPickup ? (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-gray-400" />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium">Pickup Service</p>
-                    <p className="text-sm text-muted-foreground">
-                      {guest.needsTransportPickup ? "Required" : "Not needed"}
-                    </p>
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    value={formData.firstName}
+                    onChange={(e) => handleChange("firstName", e.target.value)}
+                  />
                 </div>
-
-                <div
-                  className={`flex items-center gap-3 p-3 rounded-lg ${
-                    guest.needsTransportReturn ? "bg-blue-50" : "bg-gray-50"
-                  }`}
-                >
-                  {guest.needsTransportReturn ? (
-                    <Car className="w-5 h-5 text-blue-600" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-gray-400" />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium">Return Drop-off</p>
-                    <p className="text-sm text-muted-foreground">
-                      {guest.needsTransportReturn ? "Required" : "Not needed"}
-                    </p>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    value={formData.lastName}
+                    onChange={(e) => handleChange("lastName", e.target.value)}
+                  />
                 </div>
               </div>
-
-              {/* Pickup and Dropoff Timing Details */}
-              <div className="border-t pt-4 mt-4">
-                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  Pickup & Dropoff Details
-                </h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="font-medium">Pickup Date</p>
-                    <p className="text-muted-foreground">
-                      {guest.pickupDate
-                        ? formatPickupDate(guest.pickupDate)
-                        : "Not specified"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-medium">Pickup Time</p>
-                    <p className="text-muted-foreground">
-                      {guest.pickupTime
-                        ? formatTime(guest.pickupTime)
-                        : "Not specified"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-medium">Dropoff Date</p>
-                    <p className="text-muted-foreground">
-                      {guest.dropoffDate
-                        ? formatPickupDate(guest.dropoffDate)
-                        : "Not specified"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-medium">Dropoff Time</p>
-                    <p className="text-sm text-muted-foreground">
-                      {guest.dropoffTime
-                        ? formatTime(guest.dropoffTime)
-                        : "Not specified"}
-                    </p>
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleChange("email", e.target.value)}
+                  />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleChange("phone", e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phoneWhatsapp">WhatsApp Number</Label>
+                <Input
+                  id="phoneWhatsapp"
+                  value={formData.phoneWhatsapp}
+                  onChange={(e) => handleChange("phoneWhatsapp", e.target.value)}
+                />
               </div>
             </CardContent>
           </Card>
 
-          {/* Step 2: Additional Notes */}
+          {/* RSVP Status & Room */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="w-5 h-5 text-gray-600" />
-                Additional Notes
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">RSVP & Room Assignment</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>RSVP Status</Label>
+                  <Select
+                    value={formData.rsvpStatus}
+                    onValueChange={(value) => handleChange("rsvpStatus", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="attending">Attending</SelectItem>
+                      <SelectItem value="tentative">Tentative</SelectItem>
+                      <SelectItem value="declined">Declined</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Adults</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={formData.adultCount === 0 ? "" : formData.adultCount}
+                    onChange={(e) => handleChange("adultCount", e.target.value === "" ? 0 : parseInt(e.target.value))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Kids</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={formData.kidCount === 0 ? "" : formData.kidCount}
+                    onChange={(e) => handleChange("kidCount", e.target.value === "" ? 0 : parseInt(e.target.value))}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Room Number</Label>
+                <Select
+                  value={formData.roomNumber || "unassigned"}
+                  onValueChange={(value) => handleChange("roomNumber", value === "unassigned" ? "" : value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select room" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Not Assigned</SelectItem>
+                    {ROOM_OPTIONS.map((room) => (
+                      <SelectItem key={room.value} value={room.value}>
+                        {room.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Transport Information */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Plane className="w-4 h-4" />
+                Transport Information
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {guest.additionalNotes || "No additional notes provided"}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Guest Entry Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-gray-600" />
-                Guest Entry Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="font-medium">Created</p>
-                  <p className="text-muted-foreground">
-                    {guest.createdAt
-                      ? formatDate(guest.createdAt.toString())
-                      : "N/A"}
-                  </p>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Transport Mode</Label>
+                  <Select
+                    value={formData.transportMode || "none"}
+                    onValueChange={(value) => handleChange("transportMode", value === "none" ? "" : value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select mode" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Not specified</SelectItem>
+                      <SelectItem value="flight">Flight</SelectItem>
+                      <SelectItem value="train">Train</SelectItem>
+                      <SelectItem value="driving">Driving</SelectItem>
+                      <SelectItem value="bus">Bus</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div>
-                  <p className="font-medium">Last Updated</p>
-                  <p className="text-muted-foreground">
-                    {guest.updatedAt
-                      ? formatDate(guest.updatedAt.toString())
-                      : "N/A"}
-                  </p>
+                <div className="space-y-2">
+                  <Label htmlFor="flightNumber">Flight Number</Label>
+                  <Input
+                    id="flightNumber"
+                    value={formData.flightNumber}
+                    onChange={(e) => handleChange("flightNumber", e.target.value)}
+                    placeholder="e.g., AI817"
+                  />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="trainNumber">Train Number</Label>
+                  <Input
+                    id="trainNumber"
+                    value={formData.trainNumber}
+                    onChange={(e) => handleChange("trainNumber", e.target.value)}
+                    placeholder="e.g., 12345"
+                  />
+                </div>
+              </div>
+              <Separator />
+              <div className="flex gap-6">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="needsTransportPickup"
+                    checked={formData.needsTransportPickup}
+                    onCheckedChange={(checked) => handleChange("needsTransportPickup", !!checked)}
+                  />
+                  <Label htmlFor="needsTransportPickup">Needs Pickup</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="needsTransportReturn"
+                    checked={formData.needsTransportReturn}
+                    onCheckedChange={(checked) => handleChange("needsTransportReturn", !!checked)}
+                  />
+                  <Label htmlFor="needsTransportReturn">Needs Drop-off</Label>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Pickup Date</Label>
+                  <Select
+                    value={formData.pickupDate || "none"}
+                    onValueChange={(value) => handleChange("pickupDate", value === "none" ? "" : value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select date" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Not specified</SelectItem>
+                      <SelectItem value="dec10">December 10</SelectItem>
+                      <SelectItem value="dec11">December 11</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pickupTime">Pickup Time</Label>
+                  <Input
+                    id="pickupTime"
+                    value={formData.pickupTime}
+                    onChange={(e) => handleChange("pickupTime", e.target.value)}
+                    placeholder="e.g., 10:30am"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pickupLocation">Pickup Location</Label>
+                <Input
+                  id="pickupLocation"
+                  value={formData.pickupLocation}
+                  onChange={(e) => handleChange("pickupLocation", e.target.value)}
+                  placeholder="Airport, Station, etc."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Dropoff Date</Label>
+                  <Select
+                    value={formData.dropoffDate || "none"}
+                    onValueChange={(value) => handleChange("dropoffDate", value === "none" ? "" : value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select date" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Not specified</SelectItem>
+                      <SelectItem value="dec11">December 11</SelectItem>
+                      <SelectItem value="dec12">December 12</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dropoffTime">Dropoff Time</Label>
+                  <Input
+                    id="dropoffTime"
+                    value={formData.dropoffTime}
+                    onChange={(e) => handleChange("dropoffTime", e.target.value)}
+                    placeholder="e.g., 2:00pm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dropoffLocation">Dropoff Location</Label>
+                <Input
+                  id="dropoffLocation"
+                  value={formData.dropoffLocation}
+                  onChange={(e) => handleChange("dropoffLocation", e.target.value)}
+                  placeholder="Airport, Station, etc."
+                />
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        <div className="flex justify-between pt-4 border-t">
-          {onDelete && (
-            <Button
-              onClick={() => {
-                onDelete(guest);
-                onClose();
-              }}
-              variant="destructive"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete Guest
-            </Button>
+          {/* ID Documents (View Only) */}
+          {idUrls.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  ID Documents ({idUrls.length} uploaded)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {idUrls.map((url, index) => (
+                    <Button
+                      key={index}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(url, "_blank")}
+                    >
+                      <Download className="w-3 h-3 mr-1" />
+                      Document {index + 1}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
-          <div className="flex gap-2 ml-auto">
-            <Button onClick={onClose} variant="outline">
-              Close
-            </Button>
+
+          {/* Additional Notes */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Additional Notes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={formData.additionalNotes}
+                onChange={(e) => handleChange("additionalNotes", e.target.value)}
+                placeholder="Any special requirements, dietary restrictions, etc."
+                rows={3}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Actions */}
+          <div className="flex justify-between pt-4 border-t">
+            {onDelete && (
+              <Button
+                type="button"
+                onClick={() => {
+                  onDelete(guest);
+                  onClose();
+                }}
+                variant="destructive"
+                size="sm"
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                Delete
+              </Button>
+            )}
+            <div className="flex gap-2 ml-auto">
+              <Button type="button" onClick={onClose} variant="outline">
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={updateGuestMutation.isPending}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Save className="w-4 h-4 mr-1" />
+                {updateGuestMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

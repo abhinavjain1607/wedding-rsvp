@@ -57,6 +57,13 @@
       "when": 1759019697147,
       "tag": "0007_remove_guest_count",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1764569660331,
+      "tag": "0008_lame_banshee",
+      "breakpoints": true
     }
   ]
 }

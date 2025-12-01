@@ -67,6 +67,14 @@ export default function Navigation() {
                 {item.label}
               </button>
             ))}
+            <Link href="/itinerary">
+              <button
+                className="text-foreground hover:text-primary transition-colors"
+                data-testid="nav-itinerary"
+              >
+                Itinerary
+              </button>
+            </Link>
             <Link href={`/rsvp${window.location.search}`}>
               <Button
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
@@ -101,6 +109,15 @@ export default function Navigation() {
                       {item.label}
                     </button>
                   ))}
+                  <Link href="/itinerary">
+                    <button
+                      className="text-left text-foreground hover:text-primary transition-colors p-2 w-full"
+                      onClick={() => setIsOpen(false)}
+                      data-testid="nav-mobile-itinerary"
+                    >
+                      Itinerary
+                    </button>
+                  </Link>
                   <Link href={`/rsvp${window.location.search}`}>
                     <Button
                       className="w-full bg-primary text-primary-foreground hover:bg-primary/90"

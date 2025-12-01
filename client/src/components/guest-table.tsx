@@ -42,12 +42,73 @@ import {
   XCircle,
   Clock,
   Trash2,
+  Download,
 } from "lucide-react";
 import type { Guest } from "@shared/schema";
 
 interface GuestTableProps {
   guests: Guest[];
 }
+
+// Room numbers from the hotel layout
+const ROOM_OPTIONS = [
+  // Suite rooms (S series)
+  { value: "S1", label: "S1 - NR RK" },
+  { value: "S2", label: "S2 - Neeraj Sneha Aneri Chetansi" },
+  { value: "S3", label: "S3 - Mama maami rudra pahal tatsat uncle aunty" },
+  { value: "S4", label: "S4 - Harsh Divanshu Jimit Rubeena Sweeha Bhavana" },
+  // Ground floor (10x series)
+  { value: "101", label: "101 - Moni Parag" },
+  { value: "102", label: "102 - Kaka Kaki" },
+  { value: "103", label: "103 - Foi Fua" },
+  { value: "104", label: "104 - Nani Nana Maya" },
+  { value: "105", label: "105 - Sonu Nimu Tinku Meena" },
+  { value: "106", label: "106 - Mota Dada" },
+  { value: "107", label: "107 - Parlour" },
+  // 1st floor (20x series)
+  { value: "201", label: "201 - Prateek Shruti" },
+  { value: "202", label: "202 - Sweety Bhautik" },
+  { value: "203", label: "203 - Rosy and fam" },
+  { value: "204", label: "204 - Kashyap meera" },
+  { value: "205", label: "205 - Gunjan Mithila" },
+  { value: "206", label: "206 - Aafreen Mudra" },
+  { value: "207", label: "207" },
+  // 3rd floor front (30x series)
+  { value: "301", label: "301 - Thakore Jain Ashok" },
+  { value: "302", label: "302 - Jayesh uncle and" },
+  { value: "303", label: "303 - Chetansi parents" },
+  { value: "304", label: "304 - Bobby uncle" },
+  { value: "305", label: "305 - Ruma aunty" },
+  { value: "306", label: "306 - Sangu aunty" },
+  { value: "307", label: "307 - Manisha" },
+  { value: "308", label: "308 - Priti Piyush" },
+  { value: "309", label: "309 - Tejal and Bhushan" },
+  { value: "310", label: "310 - Nihar and Riddhi" },
+  { value: "311", label: "311 - Ketan, Abhay and Julie" },
+  { value: "312", label: "312 - Bakul and fam" },
+  { value: "314", label: "314 - Balendu and fam" },
+  { value: "315", label: "315 - Malti and fam" },
+  { value: "316", label: "316 - Meena aunty and fam" },
+  { value: "317", label: "317 - Vaishali aunty and fam" },
+  { value: "318", label: "318" },
+  { value: "319", label: "319 - Bhadra aunty, Madhu" },
+  // Ground floor back (40x series)
+  { value: "401", label: "401 - Manju Rekha Laji" },
+  { value: "402", label: "402 - Shreepal Jiyaji Jony" },
+  { value: "403", label: "403 - Fufasa Bapu Sona daughter" },
+  { value: "404", label: "404 - Mammi papa Bhua" },
+  { value: "405", label: "405 - Jitendra nadiad 4 people" },
+  { value: "406", label: "406 - Ider 2 people can be 4" },
+  { value: "407", label: "407" },
+  // 1st floor back (50x series)
+  { value: "501", label: "501 - Hani Abhi Monu" },
+  { value: "502", label: "502 - Shubham Araansha" },
+  { value: "503", label: "503 - Aakash Rajat Milind" },
+  { value: "504", label: "504 - Shashank Sumit" },
+  { value: "505", label: "505" },
+  { value: "506", label: "506" },
+  { value: "507", label: "507 - Vishal Chahat Saini Shalini" },
+];
 
 export default function GuestTable({ guests }: GuestTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -63,6 +124,34 @@ export default function GuestTable({ guests }: GuestTableProps) {
   const [guestToDelete, setGuestToDelete] = useState<Guest | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Update room assignment mutation
+  const updateRoomMutation = useMutation({
+    mutationFn: async ({ guestId, roomNumber }: { guestId: string; roomNumber: string | null }) => {
+      const response = await apiRequest("PUT", `/api/guests/${guestId}`, {
+        roomNumber: roomNumber,
+      });
+      if (!response.ok) {
+        throw new Error("Failed to update room assignment");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/guests"] });
+      toast({
+        title: "Success",
+        description: "Room assignment updated",
+      });
+    },
+    onError: (error) => {
+      console.error("Update room error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update room assignment",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Delete guest mutation
   const deleteGuestMutation = useMutation({
@@ -158,6 +247,98 @@ export default function GuestTable({ guests }: GuestTableProps) {
   const handleDeleteGuest = (guest: Guest) => {
     setGuestToDelete(guest);
     setDeleteConfirmOpen(true);
+  };
+
+  const handleRoomChange = (guestId: string, roomNumber: string) => {
+    updateRoomMutation.mutate({
+      guestId,
+      roomNumber: roomNumber === "unassigned" ? null : roomNumber,
+    });
+  };
+
+  // Export guest data for hotel staff
+  const exportForHotel = () => {
+    const attendingGuests = guests.filter((g) => g.rsvpStatus === "attending" || g.rsvpStatus === "tentative");
+
+    // Create CSV content
+    const headers = [
+      "Room Number",
+      "Guest Name",
+      "RSVP Status",
+      "Adults",
+      "Children",
+      "Phone",
+      "Transport Mode",
+      "Flight/Train Info",
+      "Pickup Date",
+      "Pickup Time",
+      "Pickup Location",
+      "Dropoff Date",
+      "Dropoff Time",
+      "Dropoff Location",
+      "ID Document Type",
+      "ID Document URLs",
+      "Additional Notes",
+    ];
+
+    const rows = attendingGuests.map((guest) => {
+      const idUrls = Array.isArray(guest.idUploadUrls)
+        ? guest.idUploadUrls.join(" | ")
+        : "";
+
+      return [
+        guest.roomNumber || "Not Assigned",
+        `${guest.firstName} ${guest.lastName}`,
+        guest.rsvpStatus === "attending" ? "Attending" : "Tentative",
+        guest.adultCount || 1,
+        guest.kidCount || 0,
+        guest.phoneWhatsapp || guest.phone || "",
+        guest.transportMode || "",
+        guest.flightNumber || guest.trainNumber || "",
+        guest.pickupDate || "",
+        guest.pickupTime || "",
+        guest.pickupLocation || "",
+        guest.dropoffDate || "",
+        guest.dropoffTime || "",
+        guest.dropoffLocation || "",
+        guest.idDocumentType || "",
+        idUrls,
+        guest.additionalNotes || "",
+      ];
+    });
+
+    // Sort by room number
+    rows.sort((a, b) => {
+      const roomA = a[0] === "Not Assigned" ? "ZZZ" : a[0];
+      const roomB = b[0] === "Not Assigned" ? "ZZZ" : b[0];
+      return String(roomA).localeCompare(String(roomB));
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+      ),
+    ].join("\n");
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `wedding_guest_list_${new Date().toISOString().split("T")[0]}.csv`
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "Export Complete",
+      description: `Exported ${attendingGuests.length} guests (attending + tentative)`,
+    });
   };
 
   const confirmDeleteGuest = () => {
@@ -285,6 +466,15 @@ export default function GuestTable({ guests }: GuestTableProps) {
         </div>
 
         <div className="flex gap-2">
+          <Button
+            onClick={exportForHotel}
+            variant="outline"
+            className="flex items-center gap-2"
+            data-testid="button-export"
+          >
+            <Download className="w-4 h-4" />
+            Export for Hotel
+          </Button>
           {selectedGuests.length > 0 && (
             <Button
               onClick={handleBulkMessage}
@@ -299,11 +489,11 @@ export default function GuestTable({ guests }: GuestTableProps) {
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12">
+              <TableHead className="w-8">
                 <Checkbox
                   checked={
                     selectedGuests.length === filteredGuests.length &&
@@ -314,13 +504,11 @@ export default function GuestTable({ guests }: GuestTableProps) {
                 />
               </TableHead>
               <TableHead>Name</TableHead>
+              <TableHead>Room</TableHead>
               <TableHead>Contact</TableHead>
-              <TableHead>Attending</TableHead>
-              <TableHead>Completion</TableHead>
-              <TableHead>Need Taxi</TableHead>
-              <TableHead>Flight/Train Info</TableHead>
-              <TableHead>Pickup Date & Time</TableHead>
-              <TableHead>Document Uploaded</TableHead>
+              <TableHead>Guests</TableHead>
+              <TableHead>Transport</TableHead>
+              <TableHead>Docs</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -328,7 +516,7 @@ export default function GuestTable({ guests }: GuestTableProps) {
             {filteredGuests.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={9}
+                  colSpan={8}
                   className="text-center py-8 text-muted-foreground"
                 >
                   {guests.length === 0
@@ -352,87 +540,71 @@ export default function GuestTable({ guests }: GuestTableProps) {
                     <div className="font-medium">
                       {guest.firstName} {guest.lastName}
                     </div>
+                    <div className="text-sm">
+                      {guest.rsvpStatus === "attending" ? (
+                        <span className="text-green-600">Attending</span>
+                      ) : guest.rsvpStatus === "declined" ? (
+                        <span className="text-red-600">Declined</span>
+                      ) : guest.rsvpStatus === "tentative" ? (
+                        <span className="text-orange-600">Tentative</span>
+                      ) : (
+                        <span className="text-muted-foreground">Pending</span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <div className="space-y-1">
-                      {guest.phoneWhatsapp && (
-                        <div className="text-sm">{guest.phoneWhatsapp}</div>
-                      )}
-                      {guest.phoneSms &&
-                        guest.phoneSms !== guest.phoneWhatsapp && (
-                          <div className="text-sm text-muted-foreground">
-                            {guest.phoneSms}
-                          </div>
-                        )}
+                    <Select
+                      value={guest.roomNumber || "unassigned"}
+                      onValueChange={(value) => handleRoomChange(guest.id, value)}
+                      disabled={guest.rsvpStatus !== "attending"}
+                    >
+                      <SelectTrigger className="w-20 h-8 text-xs">
+                        <SelectValue placeholder="Assign" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">Not Set</SelectItem>
+                        {ROOM_OPTIONS.map((room) => (
+                          <SelectItem key={room.value} value={room.value}>
+                            {room.value}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {guest.phoneWhatsapp || guest.phone || "-"}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
                       {guest.rsvpStatus === "attending" ? (
-                        <span className="text-green-600 font-medium">
-                          {guest.adultCount || 1} Adult
-                          {(guest.adultCount || 1) !== 1 ? "s" : ""}
-                          {guest.kidCount
-                            ? ` ${guest.kidCount} Kid${
-                                guest.kidCount !== 1 ? "s" : ""
-                              }`
-                            : ""}
-                        </span>
+                        <>
+                          {guest.adultCount || 1} Adult{(guest.adultCount || 1) > 1 ? "s" : ""}
+                          {guest.kidCount ? `, ${guest.kidCount} Kid${guest.kidCount > 1 ? "s" : ""}` : ""}
+                        </>
                       ) : (
-                        <span className="text-muted-foreground capitalize">
-                          {guest.rsvpStatus || "pending"}
-                        </span>
+                        "-"
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>{getCompletionBadge(guest)}</TableCell>
                   <TableCell>
-                    <div className="text-sm space-y-1">
+                    <div className="text-sm space-y-0.5">
                       {guest.needsTransportPickup && (
                         <div className="text-orange-600">Pickup needed</div>
                       )}
                       {guest.needsTransportReturn && (
-                        <div className="text-orange-600">Dropoff needed</div>
+                        <div className="text-orange-600">Drop needed</div>
                       )}
-                      {!guest.needsTransportPickup &&
-                        !guest.needsTransportReturn && (
-                          <span className="text-muted-foreground">No</span>
-                        )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {guest.flightNumber || guest.trainNumber ? (
-                        <div className="space-y-1">
-                          {guest.flightNumber && (
-                            <div className="text-indigo-600">
-                              ✈️ {guest.flightNumber}
-                            </div>
-                          )}
-                          {guest.trainNumber && (
-                            <div className="text-green-600">
-                              🚂 {guest.trainNumber}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
+                      {guest.flightNumber && (
+                        <div className="text-indigo-600">✈️ {guest.flightNumber}</div>
+                      )}
+                      {guest.trainNumber && (
+                        <div className="text-green-600">🚂 {guest.trainNumber}</div>
+                      )}
+                      {!guest.needsTransportPickup && !guest.needsTransportReturn &&
+                       !guest.flightNumber && !guest.trainNumber && (
                         <span className="text-muted-foreground">-</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {guest.pickupDate && guest.pickupTime ? (
-                        <span className="text-foreground">
-                          {formatPickupDateTime(
-                            guest.pickupDate,
-                            guest.pickupTime
-                          )}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          Not specified
-                        </span>
                       )}
                     </div>
                   </TableCell>
@@ -442,13 +614,10 @@ export default function GuestTable({ guests }: GuestTableProps) {
                       Array.isArray(guest.idUploadUrls) &&
                       guest.idUploadUrls.length > 0 ? (
                         <span className="text-green-600 font-medium">
-                          ✓ {guest.idUploadUrls.length} document
-                          {guest.idUploadUrls.length > 1 ? "s" : ""} uploaded
+                          {guest.idUploadUrls.length} uploaded
                         </span>
                       ) : (
-                        <span className="text-muted-foreground">
-                          Not uploaded
-                        </span>
+                        <span className="text-muted-foreground">None</span>
                       )}
                     </div>
                   </TableCell>

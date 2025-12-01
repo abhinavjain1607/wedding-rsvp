@@ -8,6 +8,7 @@ import Home from "@/pages/home";
 import RSVP from "@/pages/rsvp";
 import Login from "@/pages/login";
 import PhotoUpload from "@/pages/photo-upload";
+import Itinerary from "@/pages/itinerary";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminContent from "@/pages/admin/content";
 import AdminMessages from "@/pages/admin/messages";
@@ -63,6 +64,7 @@ function Router() {
       />
       <Route path="/rsvp" component={RSVP} />
       <Route path="/photo-upload" component={PhotoUpload} />
+      <Route path="/itinerary" component={Itinerary} />
 
       {/* Protected Admin routes */}
       <Route
